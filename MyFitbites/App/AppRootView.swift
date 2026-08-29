@@ -115,6 +115,8 @@ final class AppState: ObservableObject {
     @Published var checkoutErrorMessage: String?
     @Published var lastSubmittedOrder: CustomerV2CheckoutPayload.Order?
     @Published var deliveryQuoteErrorMessage: String?
+    @Published var tooLabProgress: TooLabProgress = .empty
+    @Published var tooLabErrorMessage: String?
     @Published var ricoStoreErrorMessage: String?
     @Published var ricoPurchaseIDsInFlight: Set<String> = []
     @Published var currentCustomerID: Int?
@@ -210,6 +212,9 @@ final class AppState: ObservableObject {
             didRefresh = true
         }
 
+        await refreshTooLabProgress()
+        didRefresh = true
+
         if didRefresh {
             objectWillChange.send()
         }
@@ -218,6 +223,66 @@ final class AppState: ObservableObject {
     func refreshDashboardAndRewards() async {
         if await refreshDashboardAndRewardsCaches() {
             objectWillChange.send()
+        }
+    }
+
+    func refreshTooLabProgress() async {
+        guard let customerAPIClient, authenticationStatus == .authenticated else { return }
+
+        do {
+            let envelope = try await customerAPIClient.tooLabSummary()
+            tooLabProgress = CustomerV2Mapper.tooLabProgress(from: envelope.tooLab, fallback: tooLabProgress)
+            tooLabErrorMessage = nil
+        } catch {
+            tooLabErrorMessage = error.localizedDescription
+        }
+    }
+
+    func completeTooLabGame(identifier: String, score: Int = 0) async -> Int {
+        guard let customerAPIClient, authenticationStatus == .authenticated else { return 0 }
+
+        do {
+            let payload = try await customerAPIClient.completeTooLabGame(identifier: identifier, score: score)
+            tooLabProgress = CustomerV2Mapper.tooLabProgress(from: payload.summary, fallback: tooLabProgress)
+            tooLabErrorMessage = nil
+            objectWillChange.send()
+            return payload.awardedLxp ?? 0
+        } catch {
+            tooLabErrorMessage = error.localizedDescription
+            return 0
+        }
+    }
+
+    func purchaseTooLabPrototype(identifier: String) async -> Int {
+        guard let customerAPIClient, authenticationStatus == .authenticated else { return 0 }
+
+        do {
+            let payload = try await customerAPIClient.purchaseTooLabPrototype(
+                identifier: identifier,
+                idempotencyKey: "ios-too-lab-prototype-\(identifier)-\(UUID().uuidString)"
+            )
+            tooLabProgress = CustomerV2Mapper.tooLabProgress(from: payload.summary, fallback: tooLabProgress)
+            tooLabErrorMessage = nil
+            objectWillChange.send()
+            return payload.awardedLxp ?? 0
+        } catch {
+            tooLabErrorMessage = error.localizedDescription
+            return 0
+        }
+    }
+
+    func submitTooLabPrototypeFeedback(purchaseID: String, report: String) async -> Int {
+        guard let customerAPIClient, authenticationStatus == .authenticated else { return 0 }
+
+        do {
+            let payload = try await customerAPIClient.submitTooLabPrototypeFeedback(purchaseID: purchaseID, report: report)
+            tooLabProgress = CustomerV2Mapper.tooLabProgress(from: payload.summary, fallback: tooLabProgress)
+            tooLabErrorMessage = nil
+            objectWillChange.send()
+            return payload.awardedLxp ?? 0
+        } catch {
+            tooLabErrorMessage = error.localizedDescription
+            return 0
         }
     }
 

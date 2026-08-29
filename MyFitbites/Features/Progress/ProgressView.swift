@@ -6,14 +6,13 @@ struct ProgressTabView: View {
     @State private var isArcadePresented = false
     @State private var isIntroPresented = false
     @State private var isClearanceCardPresented = false
-    @AppStorage("TooLabXP") private var labXP = 0
 
     private var dashboard: CustomerDashboard {
         appState.dashboardRepository.dashboard()
     }
 
     private var labAccess: TooLabAccessState {
-        TooLabAccessState(dashboard: dashboard, labXP: labXP)
+        TooLabAccessState(dashboard: dashboard, labXP: appState.tooLabProgress.totalLXP)
     }
 
     var body: some View {
@@ -97,6 +96,7 @@ struct ProgressTabView: View {
                 .toolbar(.hidden, for: .navigationBar)
                 .onAppear {
                     presentIntroIfNeeded()
+                    Task { await appState.refreshTooLabProgress() }
                 }
                 .onChange(of: appState.selectedTab) { _, _ in
                     presentIntroIfNeeded()
@@ -314,6 +314,7 @@ private struct TooLabAccessState {
         self.milestones = TooLabClearance.allCases.map(TooLabAccessMilestone.init(clearance:))
         self.prototypePreviews = [
             TooLabPrototypeDrop(
+                id: "choco-mulberry-crunch",
                 experimentCode: "EXPERIMENT #017",
                 name: "CHOCO MULBERRY CRUNCH",
                 subtitle: "Chocolate. Mulberry. Crunch.",
@@ -322,6 +323,7 @@ private struct TooLabAccessState {
                 requiredClearance: .restrictedAccess
             ),
             TooLabPrototypeDrop(
+                id: "crepe-reactor-berry",
                 experimentCode: "EXPERIMENT #021",
                 name: "CREPE REACTOR BERRY",
                 subtitle: "Protein crepe under review.",
@@ -330,6 +332,7 @@ private struct TooLabAccessState {
                 requiredClearance: .highSecurity
             ),
             TooLabPrototypeDrop(
+                id: "omega-cacao-oats",
                 experimentCode: "EXPERIMENT #024",
                 name: "OMEGA CACAO OATS",
                 subtitle: "Dark cacao test batch.",
@@ -421,14 +424,13 @@ private struct TooLabAccessMilestone: Identifiable {
 }
 
 private struct TooLabPrototypeDrop: Identifiable {
+    let id: String
     let experimentCode: String
     let name: String
     let subtitle: String
     let priceText: String
     let imageName: String
     let requiredClearance: TooLabClearance
-
-    var id: String { experimentCode }
 }
 
 private struct LabClearanceCard: View {
@@ -795,8 +797,11 @@ private struct PrototypePreviewTile: View {
 }
 
 private struct ActiveFoodExperimentCard: View {
+    @EnvironmentObject private var appState: AppState
     let access: TooLabAccessState
     let prototype: TooLabPrototypeDrop
+    @State private var purchaseMessage: String?
+    @State private var isPurchasing = false
 
     private var tint: Color {
         prototype.requiredClearance.color
@@ -852,13 +857,22 @@ private struct ActiveFoodExperimentCard: View {
                 .font(.custom("AvenirNext-DemiBold", size: 13))
                 .foregroundStyle(FBColors.muted)
 
-                Button {} label: {
+                if let purchaseMessage {
+                    Text(purchaseMessage)
+                        .font(.custom("AvenirNext-DemiBold", size: 11))
+                        .foregroundStyle(FBColors.charcoal)
+                        .lineLimit(2)
+                }
+
+                Button {
+                    Task { await purchasePrototype() }
+                } label: {
                     HStack {
-                        Text(canBuy ? "TASTE THE EXPERIMENT" : "ACCESS DENIED")
+                        Text(isPurchasing ? "RESERVING" : canBuy ? "TASTE THE EXPERIMENT" : "ACCESS DENIED")
                             .font(.custom("AvenirNext-DemiBold", size: 12))
                             .tracking(0.9)
                         Spacer()
-                        Image(systemName: canBuy ? "arrow.right" : "lock.fill")
+                        Image(systemName: isPurchasing ? "hourglass" : canBuy ? "arrow.right" : "lock.fill")
                             .font(.system(size: 14, weight: .semibold))
                     }
                     .foregroundStyle(.white)
@@ -867,7 +881,7 @@ private struct ActiveFoodExperimentCard: View {
                     .background(canBuy ? tint : FBColors.charcoal.opacity(0.72), in: RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
-                .disabled(!canBuy)
+                .disabled(!canBuy || isPurchasing)
                 .padding(.top, 2)
             }
             .padding(.leading, 12)
@@ -878,6 +892,15 @@ private struct ActiveFoodExperimentCard: View {
         .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
         .clipShape(RoundedRectangle(cornerRadius: FBCorner.card))
         .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(FBColors.line.opacity(0.66)))
+    }
+
+    private func purchasePrototype() async {
+        guard canBuy, !isPurchasing else { return }
+        isPurchasing = true
+        defer { isPurchasing = false }
+
+        let awarded = await appState.purchaseTooLabPrototype(identifier: prototype.id)
+        purchaseMessage = awarded > 0 ? "Prototype logged. +\(awarded) LXP." : appState.tooLabErrorMessage ?? "Prototype already logged."
     }
 }
 
@@ -911,7 +934,7 @@ private struct LabFieldReportCard: View {
                     Text("FILE REPORT")
                     Spacer()
                     Image(systemName: "arrow.right")
-                    Text("+50 LAB XP")
+                    Text("+100 LAB XP")
                         .padding(.horizontal, 8)
                         .frame(height: 24)
                         .background(Color.purple.opacity(0.12), in: Capsule())
@@ -985,12 +1008,12 @@ private struct LabArcadeEntryCard: View {
 }
 
 private struct LabArcadeTeaserCard: View {
+    @EnvironmentObject private var appState: AppState
     let action: () -> Void
     @AppStorage("LabPuzzleBestMoves") private var bestMoves = 0
-    @AppStorage("LabPuzzleLastDailyRewardToken") private var lastDailyRewardToken = ""
 
     private var hasClaimedDailyReward: Bool {
-        lastDailyRewardToken == String(Int(Calendar.current.startOfDay(for: Date()).timeIntervalSince1970))
+        appState.tooLabProgress.hasClaimed(game: LabArcadeGame.puzzle.rawValue)
     }
 
     var body: some View {
@@ -1042,7 +1065,7 @@ private struct LabArcadeTeaserCard: View {
 
                     HStack(spacing: 16) {
                         LabMiniStat(title: "BEST", value: bestMoves > 0 ? "\(bestMoves)" : "--")
-                        LabMiniStat(title: "TODAY'S REWARD", value: hasClaimedDailyReward ? "CLAIMED" : "+25 LAB XP")
+                        LabMiniStat(title: "TODAY'S REWARD", value: hasClaimedDailyReward ? "CLAIMED" : "+\(appState.tooLabProgress.dailyGameXP) LXP")
                     }
                 }
 
@@ -1114,22 +1137,15 @@ private struct LabMiniStat: View {
 }
 
 private struct LabTodayChecklistCard: View {
+    @EnvironmentObject private var appState: AppState
     let access: TooLabAccessState
 
     private var earnedXP: Int {
-        if access.canAccessPrototypeDrops {
-            return 25
-        }
-
-        if access.canAccessArcade {
-            return 10
-        }
-
-        return 0
+        appState.tooLabProgress.dailyGames.reduce(0) { $0 + $1.xpAwarded }
     }
 
     private var progress: Double {
-        Double(earnedXP) / 100
+        Double(earnedXP) / Double(max(1, appState.tooLabProgress.dailyGameXP * 3))
     }
 
     var body: some View {
@@ -1141,7 +1157,7 @@ private struct LabTodayChecklistCard: View {
                     Text("\(earnedXP) / 100")
                         .font(.custom("AvenirNext-DemiBold", size: 16))
                         .foregroundStyle(FBColors.charcoal)
-                    Text("LAB XP EARNED TODAY")
+                    Text("LXP EARNED TODAY")
                         .font(.custom("AvenirNext-DemiBold", size: 9))
                         .tracking(0.8)
                         .foregroundStyle(FBColors.muted)
@@ -1149,9 +1165,9 @@ private struct LabTodayChecklistCard: View {
             }
 
             HStack(spacing: 6) {
-                LabDailyTaskPill(symbol: "gamecontroller.fill", title: "Arcade", isComplete: access.canAccessArcade)
-                LabDailyTaskPill(symbol: "fork.knife", title: "Taste Test", isComplete: false)
-                LabDailyTaskPill(symbol: "flask.fill", title: "Prototype", isComplete: false)
+                LabDailyTaskPill(symbol: "puzzlepiece.fill", title: "Puzzle", isComplete: appState.tooLabProgress.hasClaimed(game: LabArcadeGame.puzzle.rawValue))
+                LabDailyTaskPill(symbol: "rectangle.on.rectangle.angled", title: "Memory", isComplete: appState.tooLabProgress.hasClaimed(game: LabArcadeGame.memory.rawValue))
+                LabDailyTaskPill(symbol: "sparkles", title: "Scratch", isComplete: appState.tooLabProgress.hasClaimed(game: LabArcadeGame.scratch.rawValue))
             }
 
             ProgressView(value: progress)
@@ -1419,14 +1435,17 @@ private struct LabArcadeFullscreenGameView: View {
 }
 
 private struct LabScratchGameCard: View {
-    private let dailyRewardAmount = 35
+    @EnvironmentObject private var appState: AppState
     @State private var symbols = LabScratchTicket.newTicket()
     @State private var revealedBoxes: Set<Int> = []
     @State private var scratchedCellsByBox: [Int: Set<Int>] = [:]
     @State private var completionMessage: String?
-    @AppStorage("LabScratchLastDailyRewardToken") private var lastDailyRewardToken = ""
     @AppStorage("LabScratchTicketsPlayed") private var ticketsPlayed = 0
     @AppStorage("LabScratchWins") private var wins = 0
+
+    private var dailyRewardAmount: Int {
+        appState.tooLabProgress.dailyGameXP
+    }
 
     private var scratchProgress: Double {
         Double(revealedBoxes.count) / Double(symbols.count)
@@ -1437,11 +1456,7 @@ private struct LabScratchGameCard: View {
     }
 
     private var hasClaimedDailyReward: Bool {
-        lastDailyRewardToken == todayRewardToken
-    }
-
-    private var todayRewardToken: String {
-        String(Int(Calendar.current.startOfDay(for: Date()).timeIntervalSince1970))
+        appState.tooLabProgress.hasClaimed(game: LabArcadeGame.scratch.rawValue)
     }
 
     var body: some View {
@@ -1490,7 +1505,7 @@ private struct LabScratchGameCard: View {
             HStack(spacing: 8) {
                 LabPuzzleStatPill(title: "Played", value: "\(ticketsPlayed)")
                 LabPuzzleStatPill(title: "Wins", value: "\(wins)")
-                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) XP")
+                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
             }
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
@@ -1605,8 +1620,11 @@ private struct LabScratchGameCard: View {
             if hasClaimedDailyReward {
                 completionMessage = "WIN: 3 \(winner.title). Daily reward already claimed."
             } else {
-                lastDailyRewardToken = todayRewardToken
-                completionMessage = "WIN: 3 \(winner.title). Daily +\(dailyRewardAmount) XP reserved."
+                completionMessage = "WIN: 3 \(winner.title). Claiming LXP..."
+                Task {
+                    let awarded = await appState.completeTooLabGame(identifier: LabArcadeGame.scratch.rawValue)
+                    completionMessage = awarded > 0 ? "WIN: 3 \(winner.title). Daily +\(awarded) LXP awarded." : "WIN: 3 \(winner.title). Daily reward already claimed."
+                }
             }
         } else {
             completionMessage = "No match this time. Too demands a rematch."
@@ -1775,7 +1793,7 @@ private enum LabScratchTicket {
 }
 
 private struct LabPongGameCard: View {
-    private let dailyRewardAmount = 25
+    @EnvironmentObject private var appState: AppState
     private let winningScore = 3
     private let maximumBallSpeed: CGFloat = 1.18
     private let frameTimer = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
@@ -1795,14 +1813,12 @@ private struct LabPongGameCard: View {
     @AppStorage("LabPongWins") private var wins = 0
     @AppStorage("LabPongBestStreak") private var bestStreak = 0
     @AppStorage("LabPongCurrentStreak") private var currentStreak = 0
-    @AppStorage("LabPongLastDailyRewardToken") private var lastDailyRewardToken = ""
-
-    private var hasClaimedDailyReward: Bool {
-        lastDailyRewardToken == todayRewardToken
+    private var dailyRewardAmount: Int {
+        appState.tooLabProgress.dailyGameXP
     }
 
-    private var todayRewardToken: String {
-        String(Int(Calendar.current.startOfDay(for: Date()).timeIntervalSince1970))
+    private var hasClaimedDailyReward: Bool {
+        appState.tooLabProgress.hasClaimed(game: LabArcadeGame.pong.rawValue)
     }
 
     var body: some View {
@@ -1851,7 +1867,7 @@ private struct LabPongGameCard: View {
             HStack(spacing: 8) {
                 LabPuzzleStatPill(title: "Wins", value: "\(wins)")
                 LabPuzzleStatPill(title: "Streak", value: "\(currentStreak)")
-                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) XP")
+                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
             }
 
             GeometryReader { proxy in
@@ -2001,8 +2017,11 @@ private struct LabPongGameCard: View {
             if hasClaimedDailyReward {
                 completionMessage = "Too wins. Daily reward already claimed."
             } else {
-                lastDailyRewardToken = todayRewardToken
-                completionMessage = "Too wins. Daily +\(dailyRewardAmount) XP reserved."
+                completionMessage = "Too wins. Claiming LXP..."
+                Task {
+                    let awarded = await appState.completeTooLabGame(identifier: LabArcadeGame.pong.rawValue)
+                    completionMessage = awarded > 0 ? "Too wins. Daily +\(awarded) LXP awarded." : "Too wins. Daily reward already claimed."
+                }
             }
         } else {
             currentStreak = 0
@@ -2170,14 +2189,16 @@ private struct LabPongScoreBadge: View {
 }
 
 private struct LabMemoryGameCard: View {
-    private let dailyRewardAmount = 25
+    @EnvironmentObject private var appState: AppState
     @State private var cards = LabMemoryCard.shuffledDeck()
     @State private var firstSelectedIndex: Int?
     @State private var isCheckingMatch = false
     @State private var attempts = 0
     @State private var completionMessage: String?
     @AppStorage("LabMemoryBestAttempts") private var bestAttempts = 0
-    @AppStorage("LabMemoryLastDailyRewardToken") private var lastDailyRewardToken = ""
+    private var dailyRewardAmount: Int {
+        appState.tooLabProgress.dailyGameXP
+    }
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
 
@@ -2186,11 +2207,7 @@ private struct LabMemoryGameCard: View {
     }
 
     private var hasClaimedDailyReward: Bool {
-        lastDailyRewardToken == todayRewardToken
-    }
-
-    private var todayRewardToken: String {
-        String(Int(Calendar.current.startOfDay(for: Date()).timeIntervalSince1970))
+        appState.tooLabProgress.hasClaimed(game: LabArcadeGame.memory.rawValue)
     }
 
     var body: some View {
@@ -2238,7 +2255,7 @@ private struct LabMemoryGameCard: View {
 
             HStack(spacing: 8) {
                 LabPuzzleStatPill(title: "Best", value: bestAttempts > 0 ? "\(bestAttempts)" : "--")
-                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) XP")
+                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
             }
 
             LazyVGrid(columns: columns, spacing: 8) {
@@ -2338,8 +2355,11 @@ private struct LabMemoryGameCard: View {
         if hasClaimedDailyReward {
             completionMessage = "Memory complete. Daily reward already claimed."
         } else {
-            lastDailyRewardToken = todayRewardToken
-            completionMessage = "Memory complete. Daily +\(dailyRewardAmount) XP reserved."
+            completionMessage = "Memory complete. Claiming LXP..."
+            Task {
+                let awarded = await appState.completeTooLabGame(identifier: LabArcadeGame.memory.rawValue, score: attempts)
+                completionMessage = awarded > 0 ? "Memory complete. Daily +\(awarded) LXP awarded." : "Memory complete. Daily reward already claimed."
+            }
         }
     }
 
@@ -2462,14 +2482,16 @@ private struct LabArcadeComingSoonCard: View {
 }
 
 private struct LabSlidingPuzzleCard: View {
+    @EnvironmentObject private var appState: AppState
     private let gridSize = 3
-    private let dailyRewardAmount = 25
     @State private var tiles: [Int?] = LabSlidingPuzzleCard.solvedTiles
     @State private var moves = 0
     @State private var hasCompletedCurrentPuzzle = false
     @State private var completionMessage: String?
     @AppStorage("LabPuzzleBestMoves") private var bestMoves = 0
-    @AppStorage("LabPuzzleLastDailyRewardToken") private var lastDailyRewardToken = ""
+    private var dailyRewardAmount: Int {
+        appState.tooLabProgress.dailyGameXP
+    }
 
     private static let solvedTiles: [Int?] = Array(0..<8).map(Optional.some) + [nil]
 
@@ -2522,7 +2544,7 @@ private struct LabSlidingPuzzleCard: View {
 
             HStack(spacing: 8) {
                 LabPuzzleStatPill(title: "Best", value: bestMoves > 0 ? "\(bestMoves)" : "--")
-                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) XP")
+                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
             }
 
             GeometryReader { proxy in
@@ -2599,11 +2621,7 @@ private struct LabSlidingPuzzleCard: View {
     }
 
     private var hasClaimedDailyReward: Bool {
-        lastDailyRewardToken == todayRewardToken
-    }
-
-    private var todayRewardToken: String {
-        String(Int(Calendar.current.startOfDay(for: Date()).timeIntervalSince1970))
+        appState.tooLabProgress.hasClaimed(game: LabArcadeGame.puzzle.rawValue)
     }
 
     private func moveTile(at location: CGPoint, tileSize: CGFloat, spacing: CGFloat) {
@@ -2682,8 +2700,11 @@ private struct LabSlidingPuzzleCard: View {
         if hasClaimedDailyReward {
             completionMessage = "Puzzle complete. Daily reward already claimed."
         } else {
-            lastDailyRewardToken = todayRewardToken
-            completionMessage = "Puzzle complete. Daily +\(dailyRewardAmount) XP reserved."
+            completionMessage = "Puzzle complete. Claiming LXP..."
+            Task {
+                let awarded = await appState.completeTooLabGame(identifier: LabArcadeGame.puzzle.rawValue, score: moves)
+                completionMessage = awarded > 0 ? "Puzzle complete. Daily +\(awarded) LXP awarded." : "Puzzle complete. Daily reward already claimed."
+            }
         }
     }
 

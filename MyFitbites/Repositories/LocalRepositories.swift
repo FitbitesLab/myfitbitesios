@@ -215,6 +215,26 @@ final class CustomerV2APIClient {
         try await get("/app-v2/rico/purchases")
     }
 
+    func tooLabSummary() async throws -> CustomerV2TooLabEnvelope {
+        try await get("/app-v2/too-lab")
+    }
+
+    func completeTooLabGame(identifier: String, score: Int = 0) async throws -> CustomerV2TooLabAwardPayload {
+        try await post("/app-v2/too-lab/games/\(identifier)/complete", body: ["score": score])
+    }
+
+    func purchaseTooLabPrototype(identifier: String, idempotencyKey: String) async throws -> CustomerV2TooLabPrototypeAwardPayload {
+        try await post(
+            "/app-v2/too-lab/prototypes/\(identifier)/purchase",
+            body: EmptyRequestBody(),
+            headers: ["Idempotency-Key": idempotencyKey]
+        )
+    }
+
+    func submitTooLabPrototypeFeedback(purchaseID: String, report: String) async throws -> CustomerV2TooLabPrototypeAwardPayload {
+        try await post("/app-v2/too-lab/prototype-purchases/\(purchaseID)/feedback", body: ["report": report])
+    }
+
     private func get<T: Decodable>(_ path: String, queryItems: [URLQueryItem] = []) async throws -> T {
         let url = url(for: path, queryItems: queryItems)
         var request = URLRequest(url: url)
@@ -810,6 +830,48 @@ struct CustomerV2RicoPurchasesPayload: Decodable {
     let purchases: [CustomerV2RicoPurchasePayload.Purchase]?
 }
 
+struct CustomerV2TooLabEnvelope: Decodable {
+    let tooLab: CustomerV2TooLabPayload?
+}
+
+struct CustomerV2TooLabAwardPayload: Decodable {
+    let awardedLxp: Int?
+    let alreadyClaimed: Bool?
+    let summary: CustomerV2TooLabPayload?
+}
+
+struct CustomerV2TooLabPrototypeAwardPayload: Decodable {
+    let purchase: CustomerV2TooLabPayload.PrototypePurchase?
+    let awardedLxp: Int?
+    let alreadyPurchased: Bool?
+    let alreadySubmitted: Bool?
+    let summary: CustomerV2TooLabPayload?
+}
+
+struct CustomerV2TooLabPayload: Decodable {
+    let totalLxp: Int?
+    let dailyGameXp: Int?
+    let prototypePurchaseXp: Int?
+    let prototypeFeedbackXp: Int?
+    let dailyGames: [DailyGame]?
+    let prototypePurchases: [PrototypePurchase]?
+
+    struct DailyGame: Decodable {
+        let gameIdentifier: String?
+        let claimed: Bool?
+        let xpAwarded: Int?
+    }
+
+    struct PrototypePurchase: Decodable {
+        let id: String?
+        let prototypeIdentifier: String?
+        let xpAwarded: Int?
+        let feedbackXpAwarded: Int?
+        let feedbackSubmittedAt: String?
+        let purchasedAt: String?
+    }
+}
+
 enum CustomerV2APIError: LocalizedError {
     case validation(message: String, fieldErrors: [String: [String]])
     case server(String)
@@ -988,6 +1050,39 @@ enum CustomerV2Mapper {
             qrToken: session.qrToken,
             fallbackCode: session.fallbackCode,
             reward: session.reward.flatMap(freeFitbitesReward(from:))
+        )
+    }
+
+    static func tooLabProgress(from payload: CustomerV2TooLabPayload?, fallback: TooLabProgress = .empty) -> TooLabProgress {
+        guard let payload else { return fallback }
+
+        return TooLabProgress(
+            totalLXP: payload.totalLxp ?? fallback.totalLXP,
+            dailyGameXP: payload.dailyGameXp ?? fallback.dailyGameXP,
+            prototypePurchaseXP: payload.prototypePurchaseXp ?? fallback.prototypePurchaseXP,
+            prototypeFeedbackXP: payload.prototypeFeedbackXp ?? fallback.prototypeFeedbackXP,
+            dailyGames: (payload.dailyGames ?? []).compactMap { game in
+                guard let identifier = nonEmpty(game.gameIdentifier) else { return nil }
+                return TooLabProgress.DailyGame(
+                    gameIdentifier: identifier,
+                    claimed: game.claimed ?? false,
+                    xpAwarded: game.xpAwarded ?? 0
+                )
+            },
+            prototypePurchases: (payload.prototypePurchases ?? []).compactMap { purchase in
+                guard let id = nonEmpty(purchase.id),
+                      let prototypeIdentifier = nonEmpty(purchase.prototypeIdentifier)
+                else { return nil }
+
+                return TooLabProgress.PrototypePurchase(
+                    id: id,
+                    prototypeIdentifier: prototypeIdentifier,
+                    xpAwarded: purchase.xpAwarded ?? 0,
+                    feedbackXPAwarded: purchase.feedbackXpAwarded ?? 0,
+                    feedbackSubmittedAt: purchase.feedbackSubmittedAt,
+                    purchasedAt: purchase.purchasedAt
+                )
+            }
         )
     }
 

@@ -94,6 +94,49 @@ struct RicoStoreItem: Identifiable, Hashable {
     let isLimited: Bool
 }
 
+struct TooLabProgress {
+    struct DailyGame: Identifiable, Hashable {
+        let gameIdentifier: String
+        let claimed: Bool
+        let xpAwarded: Int
+
+        var id: String { gameIdentifier }
+    }
+
+    struct PrototypePurchase: Identifiable, Hashable {
+        let id: String
+        let prototypeIdentifier: String
+        let xpAwarded: Int
+        let feedbackXPAwarded: Int
+        let feedbackSubmittedAt: String?
+        let purchasedAt: String?
+    }
+
+    let totalLXP: Int
+    let dailyGameXP: Int
+    let prototypePurchaseXP: Int
+    let prototypeFeedbackXP: Int
+    let dailyGames: [DailyGame]
+    let prototypePurchases: [PrototypePurchase]
+
+    static let empty = TooLabProgress(
+        totalLXP: 0,
+        dailyGameXP: 25,
+        prototypePurchaseXP: 250,
+        prototypeFeedbackXP: 100,
+        dailyGames: [],
+        prototypePurchases: []
+    )
+
+    func hasClaimed(game identifier: String) -> Bool {
+        dailyGames.first { $0.gameIdentifier == identifier }?.claimed ?? false
+    }
+
+    func purchase(for prototypeIdentifier: String) -> PrototypePurchase? {
+        prototypePurchases.first { $0.prototypeIdentifier == prototypeIdentifier }
+    }
+}
+
 struct CustomerOrderSummary: Identifiable, Hashable {
     struct LineItem: Identifiable, Hashable {
         let id: String
@@ -279,12 +322,13 @@ struct StoreProduct: Identifiable, Hashable {
 }
 
 enum TooLabClearance: Int, CaseIterable, Identifiable {
-    case visitor = 1
+    case visitor = 0
     case labAssistant
     case authorizedTester
     case restrictedAccess
     case highSecurity
     case classified
+    case omegaAccess
     case omegaClearance
 
     var id: Int { rawValue }
@@ -300,7 +344,8 @@ enum TooLabClearance: Int, CaseIterable, Identifiable {
         case .authorizedTester: 2_000
         case .restrictedAccess: 3_500
         case .highSecurity: 5_000
-        case .classified: 7_500
+        case .classified: 6_500
+        case .omegaAccess: 8_000
         case .omegaClearance: 10_000
         }
     }
@@ -313,6 +358,7 @@ enum TooLabClearance: Int, CaseIterable, Identifiable {
         case .restrictedAccess: "RESTRICTED ACCESS"
         case .highSecurity: "HIGH SECURITY"
         case .classified: "CLASSIFIED"
+        case .omegaAccess: "OMEGA ACCESS"
         case .omegaClearance: "OMEGA CLEARANCE"
         }
     }
@@ -324,7 +370,8 @@ enum TooLabClearance: Int, CaseIterable, Identifiable {
         case .authorizedTester: "Unlocks at 2,000 LXP."
         case .restrictedAccess: "Unlocks at 3,500 LXP."
         case .highSecurity: "Unlocks at 5,000 LXP."
-        case .classified: "Unlocks at 7,500 LXP."
+        case .classified: "Unlocks at 6,500 LXP."
+        case .omegaAccess: "Unlocks at 8,000 LXP."
         case .omegaClearance: "Unlocks at 10,000 LXP."
         }
     }
@@ -337,6 +384,7 @@ enum TooLabClearance: Int, CaseIterable, Identifiable {
         case .restrictedAccess: Color(red: 0.94, green: 0.48, blue: 0.00)
         case .highSecurity: Color(red: 0.90, green: 0.08, blue: 0.10)
         case .classified: Color(red: 0.65, green: 0.16, blue: 0.96)
+        case .omegaAccess: Color(red: 0.18, green: 0.14, blue: 0.78)
         case .omegaClearance: Color(red: 0.03, green: 0.03, blue: 0.03)
         }
     }
