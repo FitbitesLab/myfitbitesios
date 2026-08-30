@@ -617,7 +617,9 @@ private struct LabClearanceLevelsCard: View {
 
             Spacer(minLength: 0)
         }
-        .padding(FBSpacing.md)
+        .padding(.horizontal, 28)
+        .padding(.top, 28)
+        .padding(.bottom, FBSpacing.md)
         .background(Color.white.ignoresSafeArea())
     }
 }
@@ -883,12 +885,14 @@ private struct ActiveFoodExperimentCard: View {
                 .buttonStyle(.plain)
                 .disabled(!canBuy || isPurchasing)
                 .padding(.top, 2)
+                .padding(.bottom, 8)
             }
             .padding(.leading, 12)
-            .padding(.vertical, 10)
+            .padding(.top, 10)
+            .padding(.bottom, 12)
             .padding(.trailing, 10)
         }
-        .frame(height: 150)
+        .frame(height: 162)
         .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
         .clipShape(RoundedRectangle(cornerRadius: FBCorner.card))
         .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(FBColors.line.opacity(0.66)))
@@ -900,7 +904,7 @@ private struct ActiveFoodExperimentCard: View {
         defer { isPurchasing = false }
 
         let awarded = await appState.purchaseTooLabPrototype(identifier: prototype.id)
-        purchaseMessage = awarded > 0 ? "Prototype logged. +\(awarded) LXP." : appState.tooLabErrorMessage ?? "Prototype already logged."
+        purchaseMessage = awarded > 0 ? "Prototype logged. +\(awarded) LXP." : "Prototype logged."
     }
 }
 
