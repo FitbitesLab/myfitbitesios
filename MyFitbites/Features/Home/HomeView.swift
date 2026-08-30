@@ -840,7 +840,7 @@ private struct HeroMicrocopySlider: View {
             "\(greeting) \(dashboard.name)!",
             "MyFitbites Member since \(dashboard.memberSince)",
             "Tier : \(dashboard.tierName)",
-            "Level \(dashboard.level)/24"
+            "Level \(dashboard.level)/\(MyFitbitesLevelDisplay.bandMax(for: dashboard.level))"
         ]
     }
 

@@ -124,7 +124,11 @@ struct FBXPProgress: View {
     let targetXP: Int
     var headline: String?
     var avatar: LocalAvatar = .default
-    var maxLevel: Int = 24
+    var maxLevel: Int = 99
+
+    private var displayMaxLevel: Int {
+        MyFitbitesLevelDisplay.bandMax(for: level, absoluteMax: maxLevel)
+    }
 
     private var progress: Double {
         let earned = max(0, targetXP - xpToNext)
@@ -155,7 +159,7 @@ struct FBXPProgress: View {
                     .tint(FBColors.cookieOrange)
                     .accessibilityLabel("XP progress")
                 HStack {
-                    Text("LEVEL \(level)/\(maxLevel)")
+                    Text("LEVEL \(level)/\(displayMaxLevel)")
                         .textCase(.uppercase)
                     Spacer()
                     Text("\(targetXP.formatted()) XP")
@@ -167,6 +171,26 @@ struct FBXPProgress: View {
         .padding(FBSpacing.md)
         .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
         .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(FBColors.line.opacity(0.65), lineWidth: 1))
+    }
+}
+
+enum MyFitbitesLevelDisplay {
+    static func bandMax(for level: Int, absoluteMax: Int = 99) -> Int {
+        let normalizedLevel = max(1, level)
+        let bandMax: Int
+
+        switch normalizedLevel {
+        case 1...24:
+            bandMax = 24
+        case 25...49:
+            bandMax = 49
+        case 50...73:
+            bandMax = 73
+        default:
+            bandMax = 99
+        }
+
+        return min(bandMax, absoluteMax)
     }
 }
 
