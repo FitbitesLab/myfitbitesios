@@ -361,10 +361,12 @@ final class AppState: ObservableObject {
                 authenticationStatus = .authenticated
             } else {
                 currentCustomerID = nil
+                tooLabProgress = .empty
                 authenticationStatus = .guest
             }
         } catch {
             currentCustomerID = nil
+            tooLabProgress = .empty
             authenticationStatus = .unavailable
         }
     }
@@ -460,6 +462,7 @@ final class AppState: ObservableObject {
     func signOut() async {
         await customerAPIClient?.logout()
         currentCustomerID = nil
+        tooLabProgress = .empty
         authenticationErrorMessage = nil
         authenticationFieldErrors = AuthFieldErrors()
 
@@ -808,6 +811,10 @@ final class AppState: ObservableObject {
     #endif
 
     private func applyAuthenticatedUser(_ user: CustomerAuthUser) {
+        if let currentCustomerID, currentCustomerID != user.id {
+            tooLabProgress = .empty
+        }
+
         currentCustomerID = user.id
         (dashboardRepository as? CustomerV2AuthenticatedUserCaching)?.applyAuthenticatedUser(user)
         customerProfile = CustomerProfile(
