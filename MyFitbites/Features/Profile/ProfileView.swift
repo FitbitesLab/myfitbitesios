@@ -6,6 +6,8 @@ struct ProfileView: View {
     @State private var isAccountEditorPresented = false
     @State private var isAvatarPickerPresented = false
     @State private var isDefaultAddressPickerPresented = false
+    @State private var isLogoutConfirmationPresented = false
+    @State private var isLoggingOut = false
     @State private var editingPreference: AccountPreferenceSheet?
     @AppStorage("myfitbites.preference.preferred-order") private var preferredOrderPreference = "Pick up first"
     @AppStorage("myfitbites.preference.notifications") private var notificationsPreference = "Rewards and order status"
@@ -74,6 +76,16 @@ struct ProfileView: View {
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
         }
+        .alert("Log out?", isPresented: $isLogoutConfirmationPresented) {
+            Button("Cancel", role: .cancel) {}
+            Button("Log out", role: .destructive) {
+                Task {
+                    await logOut()
+                }
+            }
+        } message: {
+            Text("You'll need to sign in again to use your MyFitbites account on this device.")
+        }
     }
 
     private var profileHeader: some View {
@@ -132,6 +144,15 @@ struct ProfileView: View {
             SettingsDivider()
             SettingsInfoRow(label: "Password", value: "••••••••", symbol: "lock") {
                 isAccountEditorPresented = true
+            }
+            SettingsDivider()
+            SettingsActionRow(
+                title: isLoggingOut ? "Logging out" : "Log out",
+                symbol: "rectangle.portrait.and.arrow.right",
+                role: .destructive,
+                isDisabled: isLoggingOut
+            ) {
+                isLogoutConfirmationPresented = true
             }
         }
     }
@@ -224,6 +245,14 @@ struct ProfileView: View {
         let achievements = appState.rewardsRepository.rewards().achievements
         let unlocked = achievements.filter(\.isUnlocked).count
         return achievements.isEmpty ? "No badges yet" : "\(unlocked)/\(achievements.count) unlocked"
+    }
+
+    @MainActor
+    private func logOut() async {
+        guard !isLoggingOut else { return }
+        isLoggingOut = true
+        defer { isLoggingOut = false }
+        await appState.signOut()
     }
 }
 
@@ -368,19 +397,22 @@ private struct SettingsAvatarRow: View {
 private struct SettingsActionRow: View {
     let title: String
     let symbol: String
+    var role: ButtonRole?
+    var isDisabled = false
+    let action: () -> Void
 
     var body: some View {
-        Button {} label: {
+        Button(role: role, action: action) {
             HStack(spacing: 12) {
                 Image(systemName: symbol)
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(FBColors.cookieOrange)
+                    .foregroundStyle(role == .destructive ? Color.red.opacity(0.86) : FBColors.cookieOrange)
                     .frame(width: 28)
 
                 Text(title)
                     .font(.custom("AvenirNext-Regular", size: 14))
                     .tracking(0.5)
-                    .foregroundStyle(FBColors.charcoal)
+                    .foregroundStyle(role == .destructive ? Color.red.opacity(0.92) : FBColors.charcoal)
 
                 Spacer()
                 Image(systemName: "chevron.right")
@@ -391,6 +423,8 @@ private struct SettingsActionRow: View {
             .frame(height: 58)
         }
         .buttonStyle(.plain)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.58 : 1)
     }
 }
 

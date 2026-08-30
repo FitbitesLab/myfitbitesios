@@ -457,6 +457,18 @@ final class AppState: ObservableObject {
         }
     }
 
+    func signOut() async {
+        await customerAPIClient?.logout()
+        currentCustomerID = nil
+        authenticationErrorMessage = nil
+        authenticationFieldErrors = AuthFieldErrors()
+
+        withAnimation(.easeInOut(duration: 0.22)) {
+            authenticationMode = .signIn
+            authenticationStatus = .guest
+        }
+    }
+
     private func signInErrors(from error: Error) -> AuthFieldErrors {
         guard
             let apiError = error as? CustomerV2APIError,

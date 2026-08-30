@@ -148,6 +148,11 @@ final class CustomerV2APIClient {
         try await post("/app-v2/auth/profile", body: request)
     }
 
+    func logout() async {
+        defer { mobileTokenStore.remove() }
+        let _: CustomerV2LogoutPayload? = try? await post("/app-v2/auth/logout", body: EmptyRequestBody())
+    }
+
     func checkout(_ request: CustomerV2CheckoutRequest) async throws -> CustomerV2CheckoutPayload {
         try await post("/app-v2/checkout", body: request)
     }
@@ -591,6 +596,11 @@ struct CustomerV2AuthPayload: Decodable {
     let success: Bool?
     let user: CustomerAuthUser?
     let mobileToken: String?
+}
+
+struct CustomerV2LogoutPayload: Decodable {
+    let success: Bool?
+    let csrf: String?
 }
 
 struct CustomerV2ProfileUpdateRequest: Encodable {
