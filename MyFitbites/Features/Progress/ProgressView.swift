@@ -111,7 +111,7 @@ struct ProgressTabView: View {
                 .sheet(isPresented: $isClearanceCardPresented) {
                     LabClearanceLevelsCard(access: labAccess)
                         .presentationDetents([.medium])
-                        .presentationDragIndicator(.visible)
+                        .presentationDragIndicator(.hidden)
                 }
             }
 
@@ -573,6 +573,16 @@ private struct LabClearanceLevelsCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Spacer()
+                Capsule()
+                    .fill(FBColors.muted.opacity(0.34))
+                    .frame(width: 56, height: 5)
+                Spacer()
+            }
+            .padding(.top, 4)
+            .padding(.bottom, 10)
+
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("LAB CLEARANCE")
@@ -618,7 +628,7 @@ private struct LabClearanceLevelsCard: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 28)
-        .padding(.top, 28)
+        .padding(.top, 18)
         .padding(.bottom, FBSpacing.md)
         .background(Color.white.ignoresSafeArea())
     }
