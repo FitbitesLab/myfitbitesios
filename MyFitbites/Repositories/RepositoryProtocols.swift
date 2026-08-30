@@ -22,3 +22,8 @@ protocol CustomerDataRefreshing {
 protocol CustomerV2DashboardPayloadCaching {
     func applyDashboardPayload(_ payload: CustomerV2DashboardPayload)
 }
+
+@MainActor
+protocol CustomerV2AuthenticatedUserCaching {
+    func applyAuthenticatedUser(_ user: CustomerAuthUser)
+}

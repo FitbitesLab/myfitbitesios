@@ -797,6 +797,7 @@ final class AppState: ObservableObject {
 
     private func applyAuthenticatedUser(_ user: CustomerAuthUser) {
         currentCustomerID = user.id
+        (dashboardRepository as? CustomerV2AuthenticatedUserCaching)?.applyAuthenticatedUser(user)
         customerProfile = CustomerProfile(
             name: user.name,
             phone: user.phone ?? customerProfile.phone,

@@ -374,7 +374,7 @@ final class CustomerV2APIClient {
 }
 
 @MainActor
-final class APIBackedDashboardRepository: DashboardRepository, CustomerDataRefreshing, CustomerV2DashboardPayloadCaching {
+final class APIBackedDashboardRepository: DashboardRepository, CustomerDataRefreshing, CustomerV2DashboardPayloadCaching, CustomerV2AuthenticatedUserCaching {
     private let client: CustomerV2APIClient
     private let fallback: DashboardRepository
     private var cachedDashboard: CustomerDashboard
@@ -396,6 +396,30 @@ final class APIBackedDashboardRepository: DashboardRepository, CustomerDataRefre
 
     func applyDashboardPayload(_ payload: CustomerV2DashboardPayload) {
         cachedDashboard = CustomerV2Mapper.dashboard(from: payload, fallback: fallback.dashboard())
+    }
+
+    func applyAuthenticatedUser(_ user: CustomerAuthUser) {
+        cachedDashboard = CustomerDashboard(
+            id: user.id,
+            name: user.name,
+            level: cachedDashboard.level,
+            xp: cachedDashboard.xp,
+            xpToNext: cachedDashboard.xpToNext,
+            levelTarget: cachedDashboard.levelTarget,
+            memberSince: cachedDashboard.memberSince,
+            tierName: cachedDashboard.tierName,
+            nextRewardMessage: cachedDashboard.nextRewardMessage,
+            currentStreakDays: cachedDashboard.currentStreakDays,
+            proteinThisWeek: cachedDashboard.proteinThisWeek,
+            usualProduct: cachedDashboard.usualProduct,
+            hasOrderHistory: cachedDashboard.hasOrderHistory,
+            activeOrder: cachedDashboard.activeOrder,
+            daysSinceLastCompletedOrder: cachedDashboard.daysSinceLastCompletedOrder,
+            completedOrderProductIDs: cachedDashboard.completedOrderProductIDs,
+            repeatedOrderCounts: cachedDashboard.repeatedOrderCounts,
+            activeOrders: cachedDashboard.activeOrders,
+            pastOrders: cachedDashboard.pastOrders
+        )
     }
 }
 
