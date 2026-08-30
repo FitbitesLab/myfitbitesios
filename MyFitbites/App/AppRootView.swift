@@ -365,8 +365,6 @@ final class AppState: ObservableObject {
                 authenticationStatus = .guest
             }
         } catch {
-            currentCustomerID = nil
-            tooLabProgress = .empty
             authenticationStatus = .unavailable
         }
     }
@@ -381,6 +379,10 @@ final class AppState: ObservableObject {
 
         lastForegroundSessionRefreshAt = now
         await refreshAuthenticationSession()
+
+        if authenticationStatus == .authenticated {
+            await refreshTooLabProgress()
+        }
     }
 
     func submitSignIn(phone: String, password: String) async {
