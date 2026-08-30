@@ -914,7 +914,7 @@ private struct ActiveFoodExperimentCard: View {
         defer { isPurchasing = false }
 
         let awarded = await appState.purchaseTooLabPrototype(identifier: prototype.id)
-        purchaseMessage = awarded > 0 ? "Prototype logged. +\(awarded) LXP." : "Prototype logged."
+        purchaseMessage = awarded > 0 ? "Prototype order sent. +\(awarded) LXP." : "Prototype order already sent."
     }
 }
 
