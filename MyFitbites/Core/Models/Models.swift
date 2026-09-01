@@ -90,17 +90,17 @@ extension Array where Element == Achievement {
             selectedOffsets.insert(nearestLevel.offset)
         }
 
-        let remainingFamilies = locked
+        let remainingAchievements = locked
             .filter { !selectedOffsets.contains($0.offset) }
             .sorted(by: achievementPriority)
 
-        for item in remainingFamilies {
+        for item in remainingAchievements where item.achievement.displayFamily != "level" {
             guard !selected.contains(where: { $0.displayFamily == item.achievement.displayFamily }) else { continue }
             selected.append(item.achievement)
             selectedOffsets.insert(item.offset)
         }
 
-        for item in remainingFamilies where !selectedOffsets.contains(item.offset) {
+        for item in remainingAchievements where item.achievement.displayFamily != "level" && !selectedOffsets.contains(item.offset) {
             selected.append(item.achievement)
             selectedOffsets.insert(item.offset)
         }
