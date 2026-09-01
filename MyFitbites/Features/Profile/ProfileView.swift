@@ -592,6 +592,7 @@ private struct OrderMetaRow: View {
 }
 
 struct AccountAchievementsView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
 
     private var achievements: [Achievement] {
@@ -601,6 +602,23 @@ struct AccountAchievementsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: FBSpacing.lg) {
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(FBColors.charcoal)
+                            .frame(width: 42, height: 42)
+                            .background(FBColors.surface, in: Circle())
+                            .overlay(Circle().stroke(FBColors.line.opacity(0.65)))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Back to rewards")
+
+                    Spacer()
+                }
+
                 if achievements.isEmpty {
                     AccountEmptyState(
                         symbol: "medal",
