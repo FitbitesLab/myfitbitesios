@@ -662,11 +662,14 @@ private struct AchievementProgressRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: achievement.systemImage)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(achievement.isUnlocked ? FBColors.cookieOrange : FBColors.muted)
+            Image("AchievementTrophy")
+                .resizable()
+                .scaledToFit()
+                .opacity(0.5)
+                .padding(5)
                 .frame(width: 38, height: 38)
-                .background((achievement.isUnlocked ? FBColors.cookieOrange : FBColors.line).opacity(0.12), in: Circle())
+                .background((achievement.isUnlocked ? FBColors.cookieOrange : FBColors.line).opacity(0.10), in: Circle())
+                .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 7) {
                 HStack(alignment: .firstTextBaseline) {
