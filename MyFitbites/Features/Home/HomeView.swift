@@ -992,12 +992,12 @@ private struct HomeAchievementsCard: View {
 
                 HStack(alignment: .center, spacing: FBSpacing.md) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(title.uppercased())
-                            .font(.custom("AvenirNext-Regular", size: 18))
-                            .tracking(1.2)
+                        Text(title)
+                            .font(.custom("AvenirNext-Regular", size: 15))
+                            .tracking(0.2)
                             .foregroundStyle(FBColors.charcoal)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.76)
+                            .minimumScaleFactor(0.82)
 
                         Text(subtitle)
                             .font(.custom("AvenirNext-Regular", size: 12))
