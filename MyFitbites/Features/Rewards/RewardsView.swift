@@ -75,7 +75,7 @@ struct RewardsView: View {
             Image("RewardsHero")
                 .resizable()
                 .scaledToFill()
-                .frame(width: width, height: 360 + topInset)
+                .frame(width: width, height: 430 + topInset)
                 .clipped()
 
             LinearGradient(
@@ -112,7 +112,7 @@ struct RewardsView: View {
             .padding(.top, topInset + 54)
             .padding(.horizontal, FBSpacing.md)
         }
-        .frame(width: width, height: 360 + topInset)
+        .frame(width: width, height: 430 + topInset)
         .clipped()
     }
 
