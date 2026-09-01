@@ -121,8 +121,8 @@ struct RewardsView: View {
             .padding(.horizontal, FBSpacing.md)
 
             HStack {
-                Spacer()
                 ricoBalancePill
+                Spacer()
             }
             .padding(.top, topInset + 54)
             .padding(.horizontal, FBSpacing.md)
