@@ -992,18 +992,12 @@ private struct HomeAchievementsCard: View {
 
                 HStack(alignment: .center, spacing: FBSpacing.md) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Next achievement to unlock")
-                            .font(.custom("AvenirNext-DemiBold", size: 13))
-                            .tracking(0.8)
-                            .foregroundStyle(FBColors.caramel)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.82)
-
-                        Text(title)
-                            .font(.custom("AvenirNext-DemiBold", size: 16))
+                        Text(title.uppercased())
+                            .font(.custom("AvenirNext-Regular", size: 18))
+                            .tracking(1.2)
                             .foregroundStyle(FBColors.charcoal)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.82)
+                            .minimumScaleFactor(0.76)
 
                         Text(subtitle)
                             .font(.custom("AvenirNext-Regular", size: 12))
@@ -1029,7 +1023,7 @@ private struct HomeAchievementsCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Achievements, next achievement to unlock, \(title)")
+        .accessibilityLabel("Achievements, \(title)")
     }
 }
 
