@@ -31,7 +31,7 @@ struct HomeView: View {
     }
 
     private var nextAchievement: Achievement? {
-        rewards.achievements.first { !$0.isUnlocked } ?? rewards.achievements.first
+        rewards.achievements.nextActionableAchievement
     }
 
     private var rightNowState: RightNowCardState {

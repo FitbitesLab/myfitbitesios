@@ -1226,7 +1226,8 @@ enum CustomerV2Mapper {
             target: payload.target,
             xpReward: payload.xpReward ?? payload.xp,
             isUnlocked: payload.isUnlocked ?? (payload.status?.lowercased() == "unlocked"),
-            tier: nonEmpty(payload.tier)
+            tier: nonEmpty(payload.tier),
+            category: nonEmpty(payload.category)
         )
     }
 

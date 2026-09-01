@@ -71,6 +71,104 @@ struct Achievement: Identifiable {
     let xpReward: Int?
     let isUnlocked: Bool
     let tier: String?
+    let category: String?
+}
+
+extension Array where Element == Achievement {
+    var actionableAchievementQueue: [Achievement] {
+        let indexed = enumerated().map { (offset: $0.offset, achievement: $0.element) }
+        let locked = indexed.filter { !$0.achievement.isUnlocked }
+        let unlocked = indexed.filter { $0.achievement.isUnlocked }
+        var selectedOffsets = Set<Int>()
+        var selected: [Achievement] = []
+
+        if let nearestLevel = locked
+            .filter({ $0.achievement.displayFamily == "level" })
+            .sorted(by: achievementPriority)
+            .first {
+            selected.append(nearestLevel.achievement)
+            selectedOffsets.insert(nearestLevel.offset)
+        }
+
+        let remainingFamilies = locked
+            .filter { !selectedOffsets.contains($0.offset) }
+            .sorted(by: achievementPriority)
+
+        for item in remainingFamilies {
+            guard !selected.contains(where: { $0.displayFamily == item.achievement.displayFamily }) else { continue }
+            selected.append(item.achievement)
+            selectedOffsets.insert(item.offset)
+        }
+
+        for item in remainingFamilies where !selectedOffsets.contains(item.offset) {
+            selected.append(item.achievement)
+            selectedOffsets.insert(item.offset)
+        }
+
+        selected.append(contentsOf: unlocked.map(\.achievement))
+
+        return selected
+    }
+
+    var nextActionableAchievement: Achievement? {
+        actionableAchievementQueue.first
+    }
+
+    private func achievementPriority(_ lhs: (offset: Int, achievement: Achievement), _ rhs: (offset: Int, achievement: Achievement)) -> Bool {
+        let lhsRemaining = lhs.achievement.remainingProgress
+        let rhsRemaining = rhs.achievement.remainingProgress
+
+        if lhs.achievement.displayFamily == "level", rhs.achievement.displayFamily == "level", lhsRemaining != rhsRemaining {
+            return lhsRemaining < rhsRemaining
+        }
+
+        if lhs.achievement.progressRatio != rhs.achievement.progressRatio {
+            return lhs.achievement.progressRatio > rhs.achievement.progressRatio
+        }
+
+        return lhs.offset < rhs.offset
+    }
+}
+
+private extension Achievement {
+    var displayFamily: String {
+        let categoryText = category?.lowercased() ?? ""
+        let text = "\(categoryText) \(id) \(title) \(subtitle)".lowercased()
+
+        if text.contains("level") {
+            return "level"
+        }
+        if text.contains("coffee") || text.contains("cappuccin") {
+            return "coffee"
+        }
+        if text.contains("order") {
+            return "order"
+        }
+        if text.contains("streak") || text.contains("back") {
+            return "habit"
+        }
+        if text.contains("lab") || text.contains("experiment") {
+            return "lab"
+        }
+        if !categoryText.isEmpty {
+            return categoryText
+        }
+
+        return id
+    }
+
+    var progressRatio: Double {
+        guard let progress, let target, target > 0 else {
+            return isUnlocked ? 1 : 0
+        }
+
+        return min(1, max(0, Double(progress) / Double(target)))
+    }
+
+    var remainingProgress: Int {
+        guard let progress, let target else { return Int.max }
+        return max(0, target - progress)
+    }
 }
 
 struct RicoWalletSummary {

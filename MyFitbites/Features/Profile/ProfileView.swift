@@ -596,7 +596,7 @@ struct AccountAchievementsView: View {
     @EnvironmentObject private var appState: AppState
 
     private var achievements: [Achievement] {
-        appState.rewardsRepository.rewards().achievements
+        Array(appState.rewardsRepository.rewards().achievements.actionableAchievementQueue.prefix(5))
     }
 
     var body: some View {
