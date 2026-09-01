@@ -30,6 +30,10 @@ struct HomeView: View {
         appState.rewardsRepository.rewards()
     }
 
+    private var nextAchievement: Achievement? {
+        rewards.achievements.first { !$0.isUnlocked } ?? rewards.achievements.first
+    }
+
     private var rightNowState: RightNowCardState {
         #if DEBUG
         let override = RightNowDebugOverride(rawValue: rightNowDebugOverrideRaw) ?? .automatic
@@ -123,6 +127,8 @@ struct HomeView: View {
                 rightNowSection
 
                 HomeLoyaltyStampCard(completed: rewards.loyaltyStamps, total: rewards.loyaltyTarget)
+
+                HomeAchievementsCard(achievement: nextAchievement)
 
                 TooLabHomeCard(level: dashboard.level) {
                     appState.selectedTab = .progress
@@ -939,6 +945,99 @@ private struct HomeLoyaltyStamp: View {
             .opacity(isComplete ? 1 : 0.32)
             .frame(width: 30, height: 34)
             .frame(width: 32, height: 38)
+    }
+}
+
+private struct HomeAchievementsCard: View {
+    let achievement: Achievement?
+
+    private var title: String {
+        achievement?.title ?? "Keep ordering"
+    }
+
+    private var subtitle: String {
+        if let achievement {
+            return achievement.isUnlocked ? "All current achievements unlocked." : achievement.subtitle
+        }
+
+        return "Your next achievement will appear here."
+    }
+
+    private var progressText: String {
+        guard let achievement else { return "0/1" }
+
+        if let progress = achievement.progress, let target = achievement.target {
+            return "\(progress)/\(target)"
+        }
+
+        return achievement.status.uppercased()
+    }
+
+    var body: some View {
+        NavigationLink {
+            AccountAchievementsView()
+        } label: {
+            HStack(alignment: .center, spacing: FBSpacing.md) {
+                Image("AchievementTrophy")
+                    .resizable()
+                    .scaledToFit()
+                    .opacity(0.5)
+                    .padding(6)
+                    .frame(width: 46, height: 46)
+                    .background(FBColors.cookieOrange.opacity(0.10), in: Circle())
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("ACHIEVEMENTS")
+                            .font(.custom("AvenirNext-DemiBold", size: 11))
+                            .tracking(1.7)
+                            .foregroundStyle(FBColors.charcoal)
+
+                        Spacer()
+
+                        Text(progressText)
+                            .font(.fbCaption(.semibold))
+                            .foregroundStyle(FBColors.muted)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+                    }
+
+                    Text("Next achievement to unlock")
+                        .font(.custom("AvenirNext-DemiBold", size: 13))
+                        .tracking(0.8)
+                        .foregroundStyle(FBColors.caramel)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+
+                    Text(title)
+                        .font(.custom("AvenirNext-DemiBold", size: 16))
+                        .foregroundStyle(FBColors.charcoal)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+
+                    Text(subtitle)
+                        .font(.custom("AvenirNext-Regular", size: 12))
+                        .tracking(0.45)
+                        .foregroundStyle(FBColors.muted)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.86)
+                }
+
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(FBColors.charcoal)
+                    .frame(width: 36, height: 36)
+                    .background(FBColors.surface.opacity(0.92), in: Circle())
+                    .overlay(Circle().stroke(FBColors.line.opacity(0.7)))
+            }
+            .padding(FBSpacing.md)
+            .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
+            .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(FBColors.line.opacity(0.65)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Achievements, next achievement to unlock, \(title)")
     }
 }
 

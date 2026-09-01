@@ -614,7 +614,7 @@ struct AccountAchievementsView: View {
                             .overlay(Circle().stroke(FBColors.line.opacity(0.65)))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Back to rewards")
+                    .accessibilityLabel("Back")
 
                     Spacer()
                 }

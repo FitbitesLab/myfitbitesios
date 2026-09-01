@@ -29,21 +29,6 @@ struct RewardsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     rewardsHero(width: proxy.size.width, topInset: proxy.safeAreaInsets.top)
-
-                    VStack(alignment: .leading, spacing: FBSpacing.lg) {
-                        rewardsStatusCard
-
-                        achievementsMiniatureWidget
-
-                        loyaltyCard
-
-                        freeFitbitesRewardCard
-
-                        ricoStoreCard
-                    }
-                    .padding(.horizontal, FBSpacing.md)
-                    .padding(.top, -46)
-                    .padding(.bottom, FBSpacing.xl)
                 }
             }
             .ignoresSafeArea(edges: .top)
