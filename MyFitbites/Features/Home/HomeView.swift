@@ -977,59 +977,51 @@ private struct HomeAchievementsCard: View {
         NavigationLink {
             AccountAchievementsView()
         } label: {
-            HStack(alignment: .center, spacing: FBSpacing.md) {
-                Image("AchievementTrophy")
-                    .resizable()
-                    .scaledToFit()
-                    .opacity(0.5)
-                    .padding(6)
-                    .frame(width: 46, height: 46)
-                    .background(FBColors.cookieOrange.opacity(0.10), in: Circle())
-                    .clipShape(Circle())
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    HomeCardEyebrow(icon: "trophy.fill", title: "ACHIEVEMENTS")
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("ACHIEVEMENTS")
-                            .font(.custom("AvenirNext-DemiBold", size: 11))
-                            .tracking(1.7)
-                            .foregroundStyle(FBColors.charcoal)
+                    Spacer()
 
-                        Spacer()
-
-                        Text(progressText)
-                            .font(.fbCaption(.semibold))
-                            .foregroundStyle(FBColors.muted)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.78)
-                    }
-
-                    Text("Next achievement to unlock")
-                        .font(.custom("AvenirNext-DemiBold", size: 13))
-                        .tracking(0.8)
-                        .foregroundStyle(FBColors.caramel)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.82)
-
-                    Text(title)
-                        .font(.custom("AvenirNext-DemiBold", size: 16))
-                        .foregroundStyle(FBColors.charcoal)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.82)
-
-                    Text(subtitle)
-                        .font(.custom("AvenirNext-Regular", size: 12))
-                        .tracking(0.45)
+                    Text(progressText)
+                        .font(.fbCaption(.semibold))
                         .foregroundStyle(FBColors.muted)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.86)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
                 }
 
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(FBColors.charcoal)
-                    .frame(width: 36, height: 36)
-                    .background(FBColors.surface.opacity(0.92), in: Circle())
-                    .overlay(Circle().stroke(FBColors.line.opacity(0.7)))
+                HStack(alignment: .center, spacing: FBSpacing.md) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Next achievement to unlock")
+                            .font(.custom("AvenirNext-DemiBold", size: 13))
+                            .tracking(0.8)
+                            .foregroundStyle(FBColors.caramel)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        Text(title)
+                            .font(.custom("AvenirNext-DemiBold", size: 16))
+                            .foregroundStyle(FBColors.charcoal)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        Text(subtitle)
+                            .font(.custom("AvenirNext-Regular", size: 12))
+                            .tracking(0.45)
+                            .foregroundStyle(FBColors.muted)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.86)
+                    }
+
+                    Spacer(minLength: FBSpacing.sm)
+
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(FBColors.charcoal)
+                        .frame(width: 36, height: 36)
+                        .background(FBColors.surface.opacity(0.92), in: Circle())
+                        .overlay(Circle().stroke(FBColors.line.opacity(0.7)))
+                }
             }
             .padding(FBSpacing.md)
             .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
