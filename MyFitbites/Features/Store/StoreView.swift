@@ -8,11 +8,33 @@ struct StoreView: View {
     @State private var selectedCategoryID = "oats"
     @State private var selectedProduct: StoreProduct?
     @State private var isCartOpen = false
+    @State private var isSearchActive = false
+    @State private var searchText = ""
+    @FocusState private var isSearchFocused: Bool
 
     private var catalog: StoreCatalog { appState.catalogRepository.catalog() }
 
+    private var activeCategoryID: String {
+        if catalog.categories.contains(where: { $0.id == selectedCategoryID }) {
+            return selectedCategoryID
+        }
+
+        return catalog.categories.first?.id ?? selectedCategoryID
+    }
+
     private var visibleProducts: [StoreProduct] {
-        catalog.products.filter { $0.categoryID == selectedCategoryID }
+        let query = normalizedSearchText
+        guard !query.isEmpty else {
+            return catalog.products.filter { $0.categoryID == activeCategoryID }
+        }
+
+        return catalog.products.filter { product in
+            product.matchesStoreSearch(query)
+        }
+    }
+
+    private var normalizedSearchText: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private func productCount(for category: StoreCategory) -> Int {
@@ -51,9 +73,10 @@ struct StoreView: View {
                             }
                         }
                     }
-                    .id(selectedCategoryID)
+                    .id("\(activeCategoryID)-\(normalizedSearchText)")
                     .transition(.opacity)
-                    .animation(.easeInOut(duration: 0.18), value: selectedCategoryID)
+                    .animation(.easeInOut(duration: 0.18), value: activeCategoryID)
+                    .animation(.easeInOut(duration: 0.18), value: normalizedSearchText)
                 }
                 .padding(.horizontal, FBSpacing.md)
                 .padding(.top, FBSpacing.sm)
@@ -83,8 +106,12 @@ struct StoreView: View {
                 .presentationBackground(FBColors.surface)
         }
         .onAppear {
+            ensureDefaultCategorySelected()
             openPendingProductIfNeeded()
             openCartIfRequested()
+        }
+        .onChange(of: catalog.categories.map(\.id)) { _, _ in
+            ensureDefaultCategorySelected()
         }
         .onChange(of: appState.pendingStoreProductID) { _, _ in
             openPendingProductIfNeeded()
@@ -97,7 +124,15 @@ struct StoreView: View {
     private func openPendingProductIfNeeded() {
         guard let productID = appState.pendingStoreProductID else { return }
         selectedProduct = catalog.products.first { $0.id == productID }
+        if let selectedProduct {
+            selectedCategoryID = selectedProduct.categoryID
+        }
         appState.pendingStoreProductID = nil
+    }
+
+    private func ensureDefaultCategorySelected() {
+        guard !catalog.categories.contains(where: { $0.id == selectedCategoryID }) else { return }
+        selectedCategoryID = catalog.categories.first?.id ?? selectedCategoryID
     }
 
     private func openCartIfRequested() {
@@ -118,7 +153,15 @@ struct StoreView: View {
                     .frame(width: 150)
                     .accessibilityLabel("myStore")
 
-                Button {} label: {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        isSearchActive.toggle()
+                        if !isSearchActive {
+                            searchText = ""
+                        }
+                    }
+                    isSearchFocused = isSearchActive
+                } label: {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 19, weight: .semibold))
                         .foregroundStyle(FBColors.charcoal)
@@ -134,6 +177,17 @@ struct StoreView: View {
             .frame(height: 52)
 
             FulfillmentSwitch(selection: $fulfillment)
+
+            if isSearchActive {
+                StoreSearchField(text: $searchText, isFocused: $isSearchFocused) {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        searchText = ""
+                        isSearchActive = false
+                    }
+                    isSearchFocused = false
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
     }
 
@@ -144,9 +198,12 @@ struct StoreView: View {
                     Button {
                         withAnimation(.easeInOut(duration: 0.16)) {
                             selectedCategoryID = category.id
+                            searchText = ""
+                            isSearchActive = false
                         }
+                        isSearchFocused = false
                     } label: {
-                        let isSelected = selectedCategoryID == category.id
+                        let isSelected = activeCategoryID == category.id && normalizedSearchText.isEmpty
                         HStack(spacing: 7) {
                             Text(categoryDisplayName(category))
                                 .font(.custom("AvenirNext-DemiBold", size: 11))
@@ -196,6 +253,64 @@ struct StoreView: View {
         appState.cart.lines
             .filter { $0.product.inventoryItemID == product.inventoryItemID }
             .reduce(0) { $0 + $1.quantity }
+    }
+}
+
+private struct StoreSearchField: View {
+    @Binding var text: String
+    var isFocused: FocusState<Bool>.Binding
+    let onCancel: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(FBColors.muted)
+
+            TextField("Search Fitbites", text: $text)
+                .font(.custom("AvenirNext-Regular", size: 14))
+                .tracking(0.35)
+                .foregroundStyle(FBColors.charcoal)
+                .submitLabel(.search)
+                .focused(isFocused)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(FBColors.muted.opacity(0.72))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+
+            Button("Cancel", action: onCancel)
+                .font(.custom("AvenirNext-DemiBold", size: 12))
+                .tracking(0.8)
+                .foregroundStyle(FBColors.cookieOrange)
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 44)
+        .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
+        .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(FBColors.line.opacity(0.7)))
+    }
+}
+
+private extension StoreProduct {
+    func matchesStoreSearch(_ query: String) -> Bool {
+        [
+            name,
+            description,
+            ingredients,
+            badge,
+            categoryID
+        ].contains { value in
+            value.lowercased().contains(query)
+        }
     }
 }
 
