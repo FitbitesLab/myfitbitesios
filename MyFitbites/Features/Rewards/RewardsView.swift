@@ -25,20 +25,28 @@ struct RewardsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: FBSpacing.lg) {
-                rewardsHero
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    rewardsHero(width: proxy.size.width, topInset: proxy.safeAreaInsets.top)
 
-                achievementsMiniatureWidget
+                    VStack(alignment: .leading, spacing: FBSpacing.lg) {
+                        rewardsStatusCard
 
-                loyaltyCard
+                        achievementsMiniatureWidget
 
-                freeFitbitesRewardCard
+                        loyaltyCard
 
-                ricoStoreCard
+                        freeFitbitesRewardCard
+
+                        ricoStoreCard
+                    }
+                    .padding(.horizontal, FBSpacing.md)
+                    .padding(.top, -46)
+                    .padding(.bottom, FBSpacing.xl)
+                }
             }
-            .padding(FBSpacing.md)
-            .padding(.bottom, FBSpacing.xl)
+            .ignoresSafeArea(edges: .top)
         }
         .background(Color.white.ignoresSafeArea())
         .navigationTitle("Rewards")
@@ -72,21 +80,51 @@ struct RewardsView: View {
     }
 
     private var achievementsMiniatureWidget: some View {
-        VStack(spacing: 0) {
+        achievementsCard
+            .clipShape(RoundedRectangle(cornerRadius: FBCorner.card))
+            .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(FBColors.line.opacity(0.58)))
+    }
+
+    private func rewardsHero(width: CGFloat, topInset: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
             Image("RewardsHero")
                 .resizable()
                 .scaledToFill()
-                .frame(height: 176)
+                .frame(width: width, height: 360 + topInset)
                 .clipped()
 
-            achievementsCard
+            LinearGradient(
+                colors: [.black.opacity(0.26), .black.opacity(0.06), .black.opacity(0.46)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Welcome to")
+                    .font(.custom("AvenirNext-Regular", size: 14))
+                    .tracking(1.8)
+                    .textCase(.uppercase)
+                    .foregroundStyle(.white.opacity(0.84))
+
+                Text("Rewards")
+                    .font(.custom("AvenirNext-DemiBold", size: 42))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+
+                Text("Open the vault.\nCollect stamps.\nClaim what you earned.")
+                    .font(.custom("AvenirNext-Regular", size: 17))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineSpacing(3)
+            }
+            .padding(.top, topInset + 150)
+            .padding(.horizontal, FBSpacing.md)
         }
-        .clipShape(RoundedRectangle(cornerRadius: FBCorner.card))
-        .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(FBColors.line.opacity(0.58)))
-        .shadow(color: Color.black.opacity(0.06), radius: 12, y: 5)
+        .frame(width: width, height: 360 + topInset)
+        .clipped()
     }
 
-    private var rewardsHero: some View {
+    private var rewardsStatusCard: some View {
         VStack(alignment: .leading, spacing: 13) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 10) {
