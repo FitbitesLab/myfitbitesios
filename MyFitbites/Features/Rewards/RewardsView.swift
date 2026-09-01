@@ -119,9 +119,38 @@ struct RewardsView: View {
             }
             .padding(.top, topInset + 150)
             .padding(.horizontal, FBSpacing.md)
+
+            HStack {
+                Spacer()
+                ricoBalancePill
+            }
+            .padding(.top, topInset + 54)
+            .padding(.horizontal, FBSpacing.md)
         }
         .frame(width: width, height: 360 + topInset)
         .clipped()
+    }
+
+    private var ricoBalancePill: some View {
+        HStack(spacing: 7) {
+            Image("RicoCoin")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 24, height: 24)
+
+            Text(rewards.ricoWallet.balance.formatted())
+                .font(.custom("AvenirNext-DemiBold", size: 14))
+                .foregroundStyle(FBColors.charcoal)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .padding(.vertical, 7)
+        .padding(.leading, 8)
+        .padding(.trailing, 13)
+        .background(Color.white.opacity(0.96), in: Capsule())
+        .overlay(Capsule().stroke(Color.white.opacity(0.72), lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.16), radius: 12, y: 5)
+        .accessibilityLabel("\(rewards.ricoWallet.balance) Rico Coins")
     }
 
     private var rewardsStatusCard: some View {
