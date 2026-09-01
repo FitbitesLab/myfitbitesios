@@ -75,7 +75,7 @@ struct RewardsView: View {
             Image("RewardsHero")
                 .resizable()
                 .scaledToFill()
-                .frame(width: width, height: 430 + topInset)
+                .frame(width: width, height: 430 + topInset, alignment: .trailing)
                 .clipped()
 
             LinearGradient(
