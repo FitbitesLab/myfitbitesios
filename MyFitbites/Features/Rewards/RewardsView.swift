@@ -102,9 +102,7 @@ struct RewardsView: View {
             Image("RicoCoin")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 38, height: 38)
-                .frame(width: 46, height: 46)
-                .background(FBColors.surface, in: Circle())
+                .frame(width: 54, height: 54)
 
             Text(rewards.ricoWallet.balance.formatted())
                 .font(.custom("AvenirNext-DemiBold", size: 18))
