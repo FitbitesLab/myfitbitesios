@@ -167,6 +167,7 @@ struct ProgressTabView: View {
                 .resizable()
                 .scaledToFill()
                 .frame(width: width, height: 430 + topInset)
+                .opacity(0.5)
                 .clipped()
 
             LinearGradient(

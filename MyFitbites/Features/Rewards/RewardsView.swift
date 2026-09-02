@@ -76,6 +76,7 @@ struct RewardsView: View {
                 .resizable()
                 .scaledToFill()
                 .frame(width: width, height: 430 + topInset, alignment: .trailing)
+                .opacity(0.5)
                 .clipped()
 
             LinearGradient(
