@@ -3,7 +3,6 @@ enum AppTab: Hashable {
     case order
     case progress
     case rewards
-    case profile
 
     var title: String {
         switch self {
@@ -11,7 +10,6 @@ enum AppTab: Hashable {
         case .order: "Order"
         case .progress: "Too's Lab"
         case .rewards: "Rewards"
-        case .profile: "Profile"
         }
     }
 
@@ -21,7 +19,6 @@ enum AppTab: Hashable {
         case .order: "bag"
         case .progress: "flask"
         case .rewards: "gift"
-        case .profile: "person"
         }
     }
 }

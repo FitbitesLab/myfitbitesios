@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject private var appState: AppState
+    @Environment(\.dismiss) private var dismiss
+    let showsBackButton: Bool
     @State private var editingAddress: SavedAddress?
     @State private var isAccountEditorPresented = false
     @State private var isAvatarPickerPresented = false
@@ -12,9 +14,17 @@ struct ProfileView: View {
     @AppStorage("myfitbites.preference.preferred-order") private var preferredOrderPreference = "Pick up first"
     @AppStorage("myfitbites.preference.notifications") private var notificationsPreference = "Rewards and order status"
 
+    init(showsBackButton: Bool = false) {
+        self.showsBackButton = showsBackButton
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: FBSpacing.lg) {
+                if showsBackButton {
+                    backButton
+                }
+
                 profileHeader
                 accountCard
                 myFitbitesCard
@@ -86,6 +96,21 @@ struct ProfileView: View {
         } message: {
             Text("You'll need to sign in again to use your MyFitbites account on this device.")
         }
+    }
+
+    private var backButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(FBColors.charcoal)
+                .frame(width: 44, height: 44)
+                .background(FBColors.surface, in: Circle())
+                .overlay(Circle().stroke(FBColors.line.opacity(0.7)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Back")
     }
 
     private var profileHeader: some View {

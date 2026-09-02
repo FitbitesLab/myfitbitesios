@@ -385,26 +385,22 @@ struct HomeView: View {
 
             Spacer()
 
-            notificationButton
+            settingsLink
         }
     }
 
-    private var notificationButton: some View {
-        Button {} label: {
-            Image(systemName: "bell")
+    private var settingsLink: some View {
+        NavigationLink {
+            ProfileView(showsBackButton: true)
+        } label: {
+            Image(systemName: "person.crop.circle")
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(FBColors.charcoal)
                 .frame(width: 42, height: 42)
                 .background(FBColors.surface.opacity(0.92), in: Circle())
-                .overlay(alignment: .topTrailing) {
-                    Circle()
-                        .fill(FBColors.cookieOrange)
-                        .frame(width: 8, height: 8)
-                        .offset(x: -9, y: 10)
-                }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Notifications")
+        .accessibilityLabel("Account settings")
     }
 
     private var usual: some View {

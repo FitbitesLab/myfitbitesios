@@ -39,12 +39,6 @@ struct AppRootView: View {
                     }
                     .tabItem { Label(AppTab.rewards.title, systemImage: AppTab.rewards.symbol) }
                     .tag(AppTab.rewards)
-
-                    NavigationStack(path: $appState.profilePath) {
-                        ProfileView()
-                    }
-                    .tabItem { Label(AppTab.profile.title, systemImage: AppTab.profile.symbol) }
-                    .tag(AppTab.profile)
                 }
                 .tint(FBColors.cookieOrange)
                 .toolbarBackground(FBColors.ivory, for: .tabBar)
@@ -84,7 +78,6 @@ final class AppState: ObservableObject {
     @Published var orderPath = NavigationPath()
     @Published var progressPath = NavigationPath()
     @Published var rewardsPath = NavigationPath()
-    @Published var profilePath = NavigationPath()
     @Published var cart = CartStore()
     @Published var pendingStoreProductID: String?
     @Published var shouldOpenCartOnOrderTab = false
