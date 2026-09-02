@@ -29,6 +29,13 @@ struct RewardsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     rewardsHero(width: proxy.size.width, topInset: proxy.safeAreaInsets.top)
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        rewardsBalanceCard
+                    }
+                    .padding(.horizontal, FBSpacing.md)
+                    .padding(.top, -46)
+                    .padding(.bottom, 28)
                 }
             }
             .ignoresSafeArea(edges: .top)
@@ -85,36 +92,71 @@ struct RewardsView: View {
                 endPoint: .bottom
             )
 
-            HStack {
-                ricoBalancePill
-                Spacer()
-            }
-            .padding(.top, topInset + 54)
-            .padding(.horizontal, FBSpacing.md)
         }
         .frame(width: width, height: 430 + topInset)
         .clipped()
     }
 
-    private var ricoBalancePill: some View {
-        HStack(spacing: 7) {
+    private var rewardsBalanceCard: some View {
+        HStack(spacing: 12) {
             Image("RicoCoin")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 24, height: 24)
+                .frame(width: 38, height: 38)
+                .frame(width: 46, height: 46)
+                .background(FBColors.surface, in: Circle())
 
-            Text(rewards.ricoWallet.balance.formatted())
-                .font(.custom("AvenirNext-DemiBold", size: 14))
-                .foregroundStyle(FBColors.charcoal)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("RICO BALANCE")
+                        .font(.custom("AvenirNext-DemiBold", size: 14))
+                        .tracking(0.8)
+                        .foregroundStyle(FBColors.charcoal)
+
+                    Spacer()
+
+                    Text("\(rewards.ricoWallet.balance.formatted()) COINS")
+                        .font(.custom("AvenirNext-DemiBold", size: 11))
+                        .foregroundStyle(FBColors.cookieOrange)
+                }
+
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(FBColors.cookieOrange.opacity(0.16))
+
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [FBColors.tielYellow, FBColors.cookieOrange],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: max(12, proxy.size.width * min(1, Double(rewards.ricoWallet.balance) / 20)))
+                    }
+                }
+                .frame(height: 7)
+                .overlay(Capsule().stroke(.white.opacity(0.62), lineWidth: 0.7))
+
+                HStack(spacing: 6) {
+                    Text("Use coins inside Rico's Store.")
+                        .font(.custom("AvenirNext-Regular", size: 11))
+                        .foregroundStyle(FBColors.charcoal.opacity(0.72))
+                        .lineLimit(1)
+
+                    Spacer(minLength: 4)
+
+                    Image(systemName: "chevron.up")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(FBColors.cookieOrange.opacity(0.78))
+                }
+            }
         }
-        .padding(.vertical, 7)
-        .padding(.leading, 8)
-        .padding(.trailing, 13)
-        .background(Color.white.opacity(0.96), in: Capsule())
-        .overlay(Capsule().stroke(Color.white.opacity(0.72), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.16), radius: 12, y: 5)
+        .padding(10)
+        .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
+        .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(.white.opacity(0.7)))
+        .shadow(color: .black.opacity(0.12), radius: 16, y: 8)
         .accessibilityLabel("\(rewards.ricoWallet.balance) Rico Coins")
     }
 
