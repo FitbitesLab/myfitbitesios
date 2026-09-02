@@ -113,6 +113,7 @@ struct RewardsView: View {
             Spacer()
         }
         .padding(10)
+        .frame(height: 76)
         .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
         .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(.white.opacity(0.7)))
         .shadow(color: .black.opacity(0.12), radius: 16, y: 8)
