@@ -34,7 +34,7 @@ struct RewardsView: View {
                         rewardsBalanceCard
                     }
                     .padding(.horizontal, FBSpacing.md)
-                    .padding(.top, -46)
+                    .padding(.top, -17)
                     .padding(.bottom, 28)
                 }
             }
@@ -106,52 +106,13 @@ struct RewardsView: View {
                 .frame(width: 46, height: 46)
                 .background(FBColors.surface, in: Circle())
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("RICO BALANCE")
-                        .font(.custom("AvenirNext-DemiBold", size: 14))
-                        .tracking(0.8)
-                        .foregroundStyle(FBColors.charcoal)
+            Text(rewards.ricoWallet.balance.formatted())
+                .font(.custom("AvenirNext-DemiBold", size: 18))
+                .foregroundStyle(FBColors.charcoal)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
 
-                    Spacer()
-
-                    Text("\(rewards.ricoWallet.balance.formatted()) COINS")
-                        .font(.custom("AvenirNext-DemiBold", size: 11))
-                        .foregroundStyle(FBColors.cookieOrange)
-                }
-
-                GeometryReader { proxy in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(FBColors.cookieOrange.opacity(0.16))
-
-                        Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [FBColors.tielYellow, FBColors.cookieOrange],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .frame(width: max(12, proxy.size.width * min(1, Double(rewards.ricoWallet.balance) / 20)))
-                    }
-                }
-                .frame(height: 7)
-                .overlay(Capsule().stroke(.white.opacity(0.62), lineWidth: 0.7))
-
-                HStack(spacing: 6) {
-                    Text("Use coins inside Rico's Store.")
-                        .font(.custom("AvenirNext-Regular", size: 11))
-                        .foregroundStyle(FBColors.charcoal.opacity(0.72))
-                        .lineLimit(1)
-
-                    Spacer(minLength: 4)
-
-                    Image(systemName: "chevron.up")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(FBColors.cookieOrange.opacity(0.78))
-                }
-            }
+            Spacer()
         }
         .padding(10)
         .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
