@@ -170,31 +170,10 @@ struct ProgressTabView: View {
                 .clipped()
 
             LinearGradient(
-                colors: [.black.opacity(0.28), .black.opacity(0.10), .black.opacity(0.34)],
+                colors: [.black.opacity(0.12), .black.opacity(0.02), .black.opacity(0.12)],
                 startPoint: .top,
                 endPoint: .bottom
             )
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Welcome to")
-                    .font(.custom("AvenirNext-Regular", size: 14))
-                    .tracking(1.8)
-                    .textCase(.uppercase)
-                    .foregroundStyle(.white.opacity(0.86))
-
-                Text("Too's Lab")
-                    .font(.custom("AvenirNext-DemiBold", size: 42))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-
-                Text("Taste experiments.\nReport findings.\nPlay questionable science.")
-                    .font(.custom("AvenirNext-Regular", size: 17))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .lineSpacing(3)
-            }
-            .padding(.top, topInset + 178)
-            .padding(.horizontal, FBSpacing.md)
         }
         .frame(width: width, height: 430 + topInset)
         .clipped()

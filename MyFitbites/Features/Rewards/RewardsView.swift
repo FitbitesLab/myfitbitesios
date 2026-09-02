@@ -79,31 +79,10 @@ struct RewardsView: View {
                 .clipped()
 
             LinearGradient(
-                colors: [.black.opacity(0.26), .black.opacity(0.06), .black.opacity(0.46)],
+                colors: [.black.opacity(0.12), .black.opacity(0.02), .black.opacity(0.12)],
                 startPoint: .top,
                 endPoint: .bottom
             )
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Welcome to")
-                    .font(.custom("AvenirNext-Regular", size: 14))
-                    .tracking(1.8)
-                    .textCase(.uppercase)
-                    .foregroundStyle(.white.opacity(0.84))
-
-                Text("Rewards")
-                    .font(.custom("AvenirNext-DemiBold", size: 42))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-
-                Text("Open the vault.\nCollect stamps.\nClaim what you earned.")
-                    .font(.custom("AvenirNext-Regular", size: 17))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .lineSpacing(3)
-            }
-            .padding(.top, topInset + 150)
-            .padding(.horizontal, FBSpacing.md)
 
             HStack {
                 ricoBalancePill
