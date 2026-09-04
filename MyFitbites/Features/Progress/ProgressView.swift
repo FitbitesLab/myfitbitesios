@@ -1354,10 +1354,11 @@ private enum LabArcadeGame: String, CaseIterable, Identifiable {
     case puzzle
     case memory
     case scratch
+    case flappyTiel = "flappy_tiel"
     case pong
 
     static var allCases: [LabArcadeGame] {
-        [.puzzle, .memory, .scratch]
+        [.puzzle, .memory, .scratch, .flappyTiel]
     }
 
     var id: String { rawValue }
@@ -1367,6 +1368,7 @@ private enum LabArcadeGame: String, CaseIterable, Identifiable {
         case .puzzle: "Puzzle"
         case .memory: "Memory"
         case .scratch: "Scratch"
+        case .flappyTiel: "Flappy"
         case .pong: "Too Pong"
         }
     }
@@ -1376,6 +1378,7 @@ private enum LabArcadeGame: String, CaseIterable, Identifiable {
         case .puzzle: "Slide the secret lab scene."
         case .memory: "Match every lab specimen."
         case .scratch: "Experiment not mixed yet."
+        case .flappyTiel: "Tap Tiel through the pipes."
         case .pong: "Too vs Tiel vertical rally."
         }
     }
@@ -1385,6 +1388,7 @@ private enum LabArcadeGame: String, CaseIterable, Identifiable {
         case .puzzle: "square.grid.3x3.fill"
         case .memory: "rectangle.on.rectangle.angled"
         case .scratch: "sparkles"
+        case .flappyTiel: "bird.fill"
         case .pong: "circle.grid.cross.fill"
         }
     }
@@ -1420,6 +1424,8 @@ private struct LabArcadeFullscreenGameView: View {
                 LabMemoryGameCard()
             case .scratch:
                 LabScratchGameCard()
+            case .flappyTiel:
+                FlappyTielGameCard()
             case .pong:
                 LabPongGameCard()
             }
@@ -2721,7 +2727,7 @@ private struct LabSlidingPuzzleCard: View {
     }
 }
 
-private struct LabPuzzleStatPill: View {
+struct LabPuzzleStatPill: View {
     let title: String
     let value: String
 
@@ -2756,7 +2762,7 @@ private enum LabPuzzleSound {
     }
 }
 
-private enum LabArcadeSound {
+enum LabArcadeSound {
     static func playBounce() {
         AudioServicesPlaySystemSound(1104)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
