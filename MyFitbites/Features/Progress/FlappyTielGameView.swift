@@ -418,10 +418,10 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         pair.zPosition = 6
         pair.position = CGPoint(x: startX, y: 0)
 
-        let topPipe = pipe(height: topHeight, width: pipeWidth, imageName: "FlappyTielPipeBlue", anchor: CGPoint(x: 0.5, y: 1))
+        let topPipe = pipe(height: topHeight, width: pipeWidth, position: .top)
         topPipe.position = CGPoint(x: 0, y: size.height - topHeight / 2)
 
-        let bottomPipe = pipe(height: bottomHeight, width: pipeWidth, imageName: "FlappyTielPipeGreen", anchor: CGPoint(x: 0.5, y: 0))
+        let bottomPipe = pipe(height: bottomHeight, width: pipeWidth, position: .bottom)
         bottomPipe.position = CGPoint(x: 0, y: 46 + bottomHeight / 2)
 
         let scoreGate = SKNode()
@@ -443,16 +443,45 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         ]))
     }
 
-    private func pipe(height: CGFloat, width: CGFloat, imageName: String, anchor: CGPoint) -> SKNode {
-        let node = SKNode()
-        let visiblePipe = SKSpriteNode(imageNamed: imageName)
-        visiblePipe.size = CGSize(width: width + 18, height: height + 22)
-        visiblePipe.anchorPoint = anchor
-        visiblePipe.position = CGPoint(x: 0, y: anchor.y == 1 ? height / 2 : -height / 2)
-        visiblePipe.zPosition = 1
-        node.addChild(visiblePipe)
+    private enum PipePosition {
+        case top
+        case bottom
+    }
 
-        node.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: width, height: height))
+    private func pipe(height: CGFloat, width: CGFloat, position: PipePosition) -> SKNode {
+        let node = SKNode()
+        let lidHeight = min(max(height * 0.32, 52), 74)
+        let shaftHeight = max(height - lidHeight + 12, 24)
+        let texture = SKTexture(imageNamed: position == .top ? "FlappyTielPipeBlue" : "FlappyTielPipeGreen")
+        let shaftRect = position == .top
+            ? CGRect(x: 0, y: 0.25, width: 1, height: 0.75)
+            : CGRect(x: 0, y: 0, width: 1, height: 0.75)
+        let lidRect = position == .top
+            ? CGRect(x: 0, y: 0, width: 1, height: 0.25)
+            : CGRect(x: 0, y: 0.75, width: 1, height: 0.25)
+
+        let shaft = SKSpriteNode(texture: SKTexture(rect: shaftRect, in: texture))
+        shaft.size = CGSize(width: width, height: shaftHeight)
+        shaft.position = CGPoint(
+            x: 0,
+            y: position == .top ? height / 2 - shaftHeight / 2 : -height / 2 + shaftHeight / 2
+        )
+        shaft.zPosition = 1
+
+        let lid = SKSpriteNode(texture: SKTexture(rect: lidRect, in: texture))
+        lid.size = CGSize(width: width + 24, height: lidHeight)
+        lid.position = CGPoint(
+            x: 0,
+            y: position == .top ? -height / 2 + lidHeight / 2 : height / 2 - lidHeight / 2
+        )
+        lid.zPosition = 2
+
+        node.addChild(shaft)
+        node.addChild(lid)
+
+        let shaftBody = SKPhysicsBody(rectangleOf: shaft.size, center: shaft.position)
+        let lidBody = SKPhysicsBody(rectangleOf: lid.size, center: lid.position)
+        node.physicsBody = SKPhysicsBody(bodies: [shaftBody, lidBody])
         node.physicsBody?.isDynamic = false
         node.physicsBody?.categoryBitMask = PhysicsCategory.obstacle
         node.physicsBody?.contactTestBitMask = PhysicsCategory.tiel
