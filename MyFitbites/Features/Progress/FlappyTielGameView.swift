@@ -418,10 +418,10 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         pair.zPosition = 6
         pair.position = CGPoint(x: startX, y: 0)
 
-        let topPipe = pipe(height: topHeight, width: pipeWidth, color: UIColor(red: 0.16, green: 0.55, blue: 0.96, alpha: 1))
+        let topPipe = pipe(height: topHeight, width: pipeWidth, imageName: "FlappyTielPipeBlue", anchor: CGPoint(x: 0.5, y: 1))
         topPipe.position = CGPoint(x: 0, y: size.height - topHeight / 2)
 
-        let bottomPipe = pipe(height: bottomHeight, width: pipeWidth, color: UIColor(red: 0.20, green: 0.70, blue: 0.28, alpha: 1))
+        let bottomPipe = pipe(height: bottomHeight, width: pipeWidth, imageName: "FlappyTielPipeGreen", anchor: CGPoint(x: 0.5, y: 0))
         bottomPipe.position = CGPoint(x: 0, y: 46 + bottomHeight / 2)
 
         let scoreGate = SKNode()
@@ -443,26 +443,20 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         ]))
     }
 
-    private func pipe(height: CGFloat, width: CGFloat, color: UIColor) -> SKNode {
+    private func pipe(height: CGFloat, width: CGFloat, imageName: String, anchor: CGPoint) -> SKNode {
         let node = SKNode()
-        let body = SKShapeNode(rectOf: CGSize(width: width, height: height), cornerRadius: 10)
-        body.fillColor = color
-        body.strokeColor = UIColor.white.withAlphaComponent(0.35)
-        body.lineWidth = 2
-        body.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: width, height: height))
-        body.physicsBody?.isDynamic = false
-        body.physicsBody?.categoryBitMask = PhysicsCategory.obstacle
-        body.physicsBody?.contactTestBitMask = PhysicsCategory.tiel
-        body.physicsBody?.collisionBitMask = PhysicsCategory.tiel
+        let visiblePipe = SKSpriteNode(imageNamed: imageName)
+        visiblePipe.size = CGSize(width: width + 18, height: height + 22)
+        visiblePipe.anchorPoint = anchor
+        visiblePipe.position = CGPoint(x: 0, y: anchor.y == 1 ? height / 2 : -height / 2)
+        visiblePipe.zPosition = 1
+        node.addChild(visiblePipe)
 
-        let cap = SKShapeNode(rectOf: CGSize(width: width + 16, height: 24), cornerRadius: 8)
-        cap.fillColor = color
-        cap.strokeColor = UIColor.white.withAlphaComponent(0.38)
-        cap.lineWidth = 2
-        cap.position = CGPoint(x: 0, y: height / 2 - 12)
-
-        node.addChild(body)
-        node.addChild(cap)
+        node.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: width, height: height))
+        node.physicsBody?.isDynamic = false
+        node.physicsBody?.categoryBitMask = PhysicsCategory.obstacle
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.tiel
+        node.physicsBody?.collisionBitMask = PhysicsCategory.tiel
         return node
     }
 }
