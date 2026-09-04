@@ -322,15 +322,7 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         ground.physicsBody?.categoryBitMask = PhysicsCategory.world
         addChild(ground)
 
-        let grassMaskHeight: CGFloat = 78
-        let grassMask = SKShapeNode(rectOf: CGSize(width: size.width, height: grassMaskHeight))
-        grassMask.fillColor = UIColor(red: 0.30, green: 0.68, blue: 0.25, alpha: 1)
-        grassMask.strokeColor = .clear
-        grassMask.position = CGPoint(x: size.width / 2, y: grassMaskHeight / 2)
-        grassMask.zPosition = 23
-        addChild(grassMask)
-
-        let grassHeight: CGFloat = 122
+        let grassHeight: CGFloat = 92
         let tileWidth = grassHeight * 3
         let tileCount = Int(ceil(size.width / tileWidth)) + 2
         let grassLayer = SKNode()
@@ -438,7 +430,7 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         let maxGapY = size.height * 0.78
         let gapCenterY = CGFloat.random(in: minGapY...maxGapY)
         let topHeight = max(40, size.height - gapCenterY - gapHeight / 2)
-        let bottomHeight = max(60, gapCenterY - gapHeight / 2 - 46)
+        let bottomHeight = max(60, gapCenterY - gapHeight / 2)
         let startX = size.width + pipeWidth
 
         let pair = SKNode()
@@ -450,7 +442,7 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         topPipe.position = CGPoint(x: 0, y: size.height - topHeight / 2)
 
         let bottomPipe = pipe(height: bottomHeight, width: pipeWidth, position: .bottom)
-        bottomPipe.position = CGPoint(x: 0, y: 46 + bottomHeight / 2)
+        bottomPipe.position = CGPoint(x: 0, y: bottomHeight / 2)
 
         let scoreGate = SKNode()
         scoreGate.position = CGPoint(x: pipeWidth / 2 + 20, y: size.height / 2)
