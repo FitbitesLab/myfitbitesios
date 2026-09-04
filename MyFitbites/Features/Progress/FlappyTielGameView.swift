@@ -322,18 +322,26 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         ground.physicsBody?.categoryBitMask = PhysicsCategory.world
         addChild(ground)
 
-        let grassHeight: CGFloat = 92
+        let grassHeight: CGFloat = 122
         let tileWidth = grassHeight * 3
         let tileCount = Int(ceil(size.width / tileWidth)) + 2
+        let grassLayer = SKNode()
+        grassLayer.zPosition = 24
+        addChild(grassLayer)
 
         for index in 0..<tileCount {
             let grass = SKSpriteNode(imageNamed: "FlappyTielGrass")
             grass.anchorPoint = CGPoint(x: 0, y: 0)
             grass.size = CGSize(width: tileWidth, height: grassHeight)
             grass.position = CGPoint(x: CGFloat(index) * tileWidth, y: 0)
-            grass.zPosition = 8
-            addChild(grass)
+            grassLayer.addChild(grass)
         }
+
+        let obstacleSpeed = (size.width + 62 * 2) / 4.3
+        grassLayer.run(.repeatForever(.sequence([
+            .moveBy(x: -tileWidth, y: 0, duration: TimeInterval(tileWidth / obstacleSpeed)),
+            .moveBy(x: tileWidth, y: 0, duration: 0)
+        ])))
     }
 
     private func addTiel() {
