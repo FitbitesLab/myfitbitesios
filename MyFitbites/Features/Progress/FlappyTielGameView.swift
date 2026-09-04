@@ -322,6 +322,14 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         ground.physicsBody?.categoryBitMask = PhysicsCategory.world
         addChild(ground)
 
+        let grassMaskHeight: CGFloat = 78
+        let grassMask = SKShapeNode(rectOf: CGSize(width: size.width, height: grassMaskHeight))
+        grassMask.fillColor = UIColor(red: 0.30, green: 0.68, blue: 0.25, alpha: 1)
+        grassMask.strokeColor = .clear
+        grassMask.position = CGPoint(x: size.width / 2, y: grassMaskHeight / 2)
+        grassMask.zPosition = 23
+        addChild(grassMask)
+
         let grassHeight: CGFloat = 122
         let tileWidth = grassHeight * 3
         let tileCount = Int(ceil(size.width / tileWidth)) + 2
