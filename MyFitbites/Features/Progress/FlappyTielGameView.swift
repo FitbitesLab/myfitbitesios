@@ -266,26 +266,28 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         sky.zPosition = -10
         addChild(sky)
 
-        let cloudRows: [(CGFloat, CGFloat, CGFloat)] = [
-            (0.85, 0.78, 26),
-            (0.73, 0.58, 18),
-            (0.61, 0.42, 22),
-            (0.48, 0.34, 15)
+        let cloudRows: [(height: CGFloat, scale: CGFloat, offset: CGFloat, speed: CGFloat)] = [
+            (0.85, 0.82, 0, 18),
+            (0.73, 0.64, 0.46, 14),
+            (0.61, 0.58, 0.22, 16),
+            (0.48, 0.42, 0.68, 12)
         ]
 
         for index in 0..<8 {
             let row = cloudRows[index % cloudRows.count]
+            let column = CGFloat(index / cloudRows.count)
             addCloud(
                 at: CGPoint(
-                    x: CGFloat(index) * size.width / 2.8 + CGFloat.random(in: -24...48),
-                    y: size.height * row.0 + CGFloat.random(in: -row.2...row.2)
+                    x: size.width * (row.offset + column * 0.62),
+                    y: size.height * row.height
                 ),
-                scale: CGFloat.random(in: row.1...(row.1 + 0.25))
+                scale: row.scale,
+                speed: row.speed
             )
         }
     }
 
-    private func addCloud(at position: CGPoint, scale: CGFloat) {
+    private func addCloud(at position: CGPoint, scale: CGFloat, speed: CGFloat) {
         let cloud = SKSpriteNode(imageNamed: "FlappyTielCloud")
         cloud.position = position
         cloud.zPosition = -4
@@ -293,11 +295,19 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         cloud.size = CGSize(width: 190 * scale, height: 80 * scale)
         addChild(cloud)
 
-        let travel = size.width + cloud.size.width + 120
-        cloud.run(.repeatForever(.sequence([
-            .moveBy(x: -travel, y: 0, duration: TimeInterval(22 / max(scale, 0.45))),
-            .moveBy(x: travel, y: 0, duration: 0)
-        ])))
+        let leftEdge = -cloud.size.width / 2 - 60
+        let rightEdge = size.width + cloud.size.width / 2 + 60
+        let firstDistance = max(cloud.position.x - leftEdge, 1)
+        let loopDistance = rightEdge - leftEdge
+        let pointsPerSecond = max(speed, 1)
+
+        cloud.run(.sequence([
+            .moveTo(x: leftEdge, duration: TimeInterval(firstDistance / pointsPerSecond)),
+            .repeatForever(.sequence([
+                .run { cloud.position.x = rightEdge },
+                .moveTo(x: leftEdge, duration: TimeInterval(loopDistance / pointsPerSecond))
+            ]))
+        ]))
     }
 
     private func addGround() {
