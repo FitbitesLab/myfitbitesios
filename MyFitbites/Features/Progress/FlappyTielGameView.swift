@@ -313,15 +313,27 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
     private func addGround() {
         let groundHeight: CGFloat = 46
         let ground = SKShapeNode(rectOf: CGSize(width: size.width, height: groundHeight))
-        ground.fillColor = UIColor(red: 0.42, green: 0.76, blue: 0.30, alpha: 1)
-        ground.strokeColor = UIColor(red: 0.22, green: 0.58, blue: 0.21, alpha: 1)
-        ground.lineWidth = 3
+        ground.fillColor = .clear
+        ground.strokeColor = .clear
         ground.position = CGPoint(x: size.width / 2, y: groundHeight / 2)
         ground.zPosition = 5
         ground.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: size.width, height: groundHeight))
         ground.physicsBody?.isDynamic = false
         ground.physicsBody?.categoryBitMask = PhysicsCategory.world
         addChild(ground)
+
+        let grassHeight: CGFloat = 92
+        let tileWidth = grassHeight * 3
+        let tileCount = Int(ceil(size.width / tileWidth)) + 2
+
+        for index in 0..<tileCount {
+            let grass = SKSpriteNode(imageNamed: "FlappyTielGrass")
+            grass.anchorPoint = CGPoint(x: 0, y: 0)
+            grass.size = CGSize(width: tileWidth, height: grassHeight)
+            grass.position = CGPoint(x: CGFloat(index) * tileWidth, y: 0)
+            grass.zPosition = 8
+            addChild(grass)
+        }
     }
 
     private func addTiel() {
