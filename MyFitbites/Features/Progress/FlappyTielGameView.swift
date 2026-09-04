@@ -319,32 +319,11 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         tiel.position = CGPoint(x: size.width * 0.3, y: size.height * 0.56)
         tiel.zPosition = 10
 
-        let body = SKShapeNode(ellipseOf: CGSize(width: 44, height: 34))
-        body.fillColor = UIColor(red: 1.0, green: 0.89, blue: 0.23, alpha: 1)
-        body.strokeColor = UIColor(red: 0.86, green: 0.62, blue: 0.04, alpha: 1)
-        body.lineWidth = 2
-
-        let wing = SKShapeNode(ellipseOf: CGSize(width: 22, height: 14))
-        wing.fillColor = UIColor(red: 0.18, green: 0.52, blue: 1.0, alpha: 1)
-        wing.strokeColor = .clear
-        wing.position = CGPoint(x: -6, y: -4)
-
-        let beak = SKShapeNode()
-        let beakPath = CGMutablePath()
-        beakPath.move(to: CGPoint(x: 20, y: 4))
-        beakPath.addLine(to: CGPoint(x: 36, y: 0))
-        beakPath.addLine(to: CGPoint(x: 20, y: -6))
-        beakPath.closeSubpath()
-        beak.path = beakPath
-        beak.fillColor = UIColor(red: 0.95, green: 0.39, blue: 0.12, alpha: 1)
-        beak.strokeColor = .clear
-
-        let eye = SKShapeNode(circleOfRadius: 4)
-        eye.fillColor = .black
-        eye.strokeColor = .clear
-        eye.position = CGPoint(x: 10, y: 8)
-
-        [body, wing, beak, eye].forEach { tiel.addChild($0) }
+        let bird = SKSpriteNode(imageNamed: "FlappyTielBird")
+        bird.size = CGSize(width: 60, height: 44)
+        bird.anchorPoint = CGPoint(x: 0.52, y: 0.5)
+        bird.zPosition = 1
+        tiel.addChild(bird)
         addChild(tiel)
     }
 
