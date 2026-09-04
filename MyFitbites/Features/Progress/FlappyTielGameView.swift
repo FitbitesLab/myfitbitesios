@@ -469,19 +469,18 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func pipe(height: CGFloat, width: CGFloat, position: PipePosition) -> SKNode {
+        if position == .top {
+            return topPipe(height: height, width: width)
+        }
+
         let node = SKNode()
         let lidHeight = min(max(height * 0.32, 52), 74)
         let shaftHeight = max(height - lidHeight + 12, 24)
-        let isTopPipe = position == .top
-        let texture = SKTexture(imageNamed: isTopPipe ? "FlappyTielPipeBlue" : "FlappyTielPipeGreen")
-        let shaftRect = position == .top
-            ? CGRect(x: 0, y: 0.25, width: 1, height: 0.75)
-            : CGRect(x: 0, y: 0, width: 1, height: 0.75)
-        let lidRect = position == .top
-            ? CGRect(x: 0, y: 0, width: 1, height: 0.25)
-            : CGRect(x: 0, y: 0.75, width: 1, height: 0.25)
-        let shaftVisibleRatio: CGFloat = isTopPipe ? 328 / 724 : 303 / 724
-        let lidVisibleRatio: CGFloat = isTopPipe ? 588 / 724 : 498 / 724
+        let texture = SKTexture(imageNamed: "FlappyTielPipeGreen")
+        let shaftRect = CGRect(x: 0, y: 0, width: 1, height: 0.75)
+        let lidRect = CGRect(x: 0, y: 0.75, width: 1, height: 0.25)
+        let shaftVisibleRatio: CGFloat = 303 / 724
+        let lidVisibleRatio: CGFloat = 498 / 724
         let shaftHitboxWidth = width * 0.44
         let lidHitboxWidth = width + 4
 
@@ -499,6 +498,36 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
             x: 0,
             y: position == .top ? -height / 2 + lidHeight / 2 : height / 2 - lidHeight / 2
         )
+        lid.zPosition = 2
+
+        node.addChild(shaft)
+        node.addChild(lid)
+
+        let shaftBody = SKPhysicsBody(rectangleOf: CGSize(width: shaftHitboxWidth, height: shaftHeight), center: shaft.position)
+        let lidBody = SKPhysicsBody(rectangleOf: CGSize(width: lidHitboxWidth, height: lidHeight), center: lid.position)
+        node.physicsBody = SKPhysicsBody(bodies: [shaftBody, lidBody])
+        node.physicsBody?.isDynamic = false
+        node.physicsBody?.categoryBitMask = PhysicsCategory.obstacle
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.tiel
+        node.physicsBody?.collisionBitMask = PhysicsCategory.tiel
+        return node
+    }
+
+    private func topPipe(height: CGFloat, width: CGFloat) -> SKNode {
+        let node = SKNode()
+        let lidHeight = min(max(height * 0.32, 52), 74)
+        let shaftHeight = max(height - lidHeight + 12, 24)
+        let shaftHitboxWidth = width
+        let lidHitboxWidth = width
+
+        let shaft = SKSpriteNode(imageNamed: "FlappyTielPipeBlueBody")
+        shaft.size = CGSize(width: width, height: shaftHeight)
+        shaft.position = CGPoint(x: 0, y: height / 2 - shaftHeight / 2)
+        shaft.zPosition = 1
+
+        let lid = SKSpriteNode(imageNamed: "FlappyTielPipeBlueLid")
+        lid.size = CGSize(width: width, height: lidHeight)
+        lid.position = CGPoint(x: 0, y: -height / 2 + lidHeight / 2)
         lid.zPosition = 2
 
         node.addChild(shaft)
