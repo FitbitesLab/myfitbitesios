@@ -259,44 +259,43 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func addSky() {
-        let sky = SKShapeNode(rectOf: size)
-        sky.fillColor = UIColor(red: 0.51, green: 0.82, blue: 1.0, alpha: 1)
-        sky.strokeColor = .clear
+        let sky = SKSpriteNode(imageNamed: "FlappyTielSky")
+        sky.size = size
+        sky.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         sky.position = CGPoint(x: size.width / 2, y: size.height / 2)
         sky.zPosition = -10
         addChild(sky)
 
-        for index in 0..<7 {
+        let cloudRows: [(CGFloat, CGFloat, CGFloat)] = [
+            (0.85, 0.78, 26),
+            (0.73, 0.58, 18),
+            (0.61, 0.42, 22),
+            (0.48, 0.34, 15)
+        ]
+
+        for index in 0..<8 {
+            let row = cloudRows[index % cloudRows.count]
             addCloud(
                 at: CGPoint(
-                    x: CGFloat(index) * size.width / 3.2 + 40,
-                    y: size.height * CGFloat.random(in: 0.58...0.9)
+                    x: CGFloat(index) * size.width / 2.8 + CGFloat.random(in: -24...48),
+                    y: size.height * row.0 + CGFloat.random(in: -row.2...row.2)
                 ),
-                scale: CGFloat.random(in: 0.72...1.25)
+                scale: CGFloat.random(in: row.1...(row.1 + 0.25))
             )
         }
     }
 
     private func addCloud(at position: CGPoint, scale: CGFloat) {
-        let cloud = SKNode()
+        let cloud = SKSpriteNode(imageNamed: "FlappyTielCloud")
         cloud.position = position
         cloud.zPosition = -4
-
-        for offset in [CGPoint(x: -26, y: -2), CGPoint(x: 0, y: 8), CGPoint(x: 28, y: -3)] {
-            let puff = SKShapeNode(ellipseOf: CGSize(width: 48, height: 30))
-            puff.fillColor = .white
-            puff.strokeColor = .clear
-            puff.alpha = 0.82
-            puff.position = offset
-            cloud.addChild(puff)
-        }
-
-        cloud.setScale(scale)
+        cloud.alpha = 0.82
+        cloud.size = CGSize(width: 190 * scale, height: 80 * scale)
         addChild(cloud)
 
-        let travel = size.width + 180
+        let travel = size.width + cloud.size.width + 120
         cloud.run(.repeatForever(.sequence([
-            .moveBy(x: -travel, y: 0, duration: TimeInterval(20 / max(scale, 0.5))),
+            .moveBy(x: -travel, y: 0, duration: TimeInterval(22 / max(scale, 0.45))),
             .moveBy(x: travel, y: 0, duration: 0)
         ])))
     }
