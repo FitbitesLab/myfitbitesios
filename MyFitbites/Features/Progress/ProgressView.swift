@@ -3,7 +3,10 @@ import SwiftUI
 
 struct ProgressTabView: View {
     @EnvironmentObject private var appState: AppState
-    @State private var isArcadePresented = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isArtworkVisible = false
+    @State private var isPanelVisible = false
+    @State private var areProductsVisible = false
     @State private var isIntroPresented = false
     @State private var isClearanceCardPresented = false
 
@@ -18,40 +21,154 @@ struct ProgressTabView: View {
     var body: some View {
         ZStack {
             GeometryReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        labHero(width: proxy.size.width, topInset: proxy.safeAreaInsets.top)
+                ZStack(alignment: .bottom) {
+                    VStack(spacing: 0) {
+                        labHero(width: proxy.size.width, height: proxy.size.height * 0.30 + proxy.safeAreaInsets.top + 28)
+                            .offset(y: -proxy.safeAreaInsets.top)
+                            .opacity(isArtworkVisible ? 1 : 0)
+                        Spacer(minLength: 0)
+                    }
+                    VStack(spacing: 0) {
+                        Capsule()
+                            .fill(FBColors.line)
+                            .frame(width: 34, height: 4)
+                            .padding(.top, 12)
+                            .padding(.bottom, 14)
+                            .accessibilityHidden(true)
 
-                        VStack(alignment: .leading, spacing: 12) {
-                            Button {
-                                presentIntro()
-                            } label: {
-                                HStack(spacing: 7) {
-                                    Image(systemName: "info.circle")
-                                        .font(.system(size: 13, weight: .semibold))
-                                    Text("What is Too's Lab?")
+                        Button {
+                            isClearanceCardPresented = true
+                        } label: {
+                            LabClearanceCard(access: labAccess)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, FBSpacing.md)
+                        .zIndex(1)
+
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 12) {
+                                labProducts
+
+                                Button(action: presentIntro) {
+                                    Label("What is Too's Lab?", systemImage: "info.circle")
                                         .font(.custom("AvenirNext-DemiBold", size: 12))
+                                        .foregroundStyle(Color.purple)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
                                 }
-                                .foregroundStyle(Color.purple)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
-
-                            Button {
-                                isClearanceCardPresented = true
-                            } label: {
-                                LabClearanceCard(access: labAccess)
+                            .padding(.horizontal, FBSpacing.md)
+                            .padding(.top, 44)
+                            .padding(.bottom, proxy.safeAreaInsets.bottom + 28)
+                        }
+                        .modifier(LabProductScrollEdgeModifier())
+                        .mask {
+                            VStack(spacing: 0) {
+                                LinearGradient(
+                                    colors: [.clear, .black],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                                .frame(height: 28)
+                                Rectangle().fill(.black)
                             }
-                            .buttonStyle(.plain)
+                        }
+                        // The fade sits underneath the XP card, not in a strip below it.
+                        .padding(.top, -28)
+                        .opacity(areProductsVisible ? 1 : 0)
+                        .offset(y: areProductsVisible ? 0 : 18)
+                        .allowsHitTesting(areProductsVisible)
+                        .accessibilityHidden(!areProductsVisible)
+                    }
+                    .frame(height: proxy.size.height * 0.70 + proxy.safeAreaInsets.bottom)
+                    .frame(maxWidth: .infinity)
+                    .background {
+                        UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28)
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.12), radius: 20, y: -6)
+                    }
+                    .offset(y: isPanelVisible ? 0 : proxy.size.height)
+                    .allowsHitTesting(isPanelVisible)
+                    .accessibilityHidden(!isPanelVisible)
+                    // Clip the entrance at the screen edge, allowing products behind the bar.
+                    .frame(height: proxy.size.height + proxy.safeAreaInsets.bottom, alignment: .bottom)
+                    .clipped()
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height + proxy.safeAreaInsets.bottom, alignment: .bottom)
+                .background(Color.white.ignoresSafeArea())
+                .navigationTitle("Too's Lab")
+                .toolbar(.hidden, for: .navigationBar)
+                .toolbarBackground(.hidden, for: .tabBar)
+                .onAppear {
+                    presentIntroIfNeeded()
+                    Task { await appState.refreshTooLabProgress() }
+                }
+                .onChange(of: appState.selectedTab) { _, _ in
+                    presentIntroIfNeeded()
+                }
+                .onChange(of: appState.currentCustomerID) { _, _ in
+                    isIntroPresented = false
+                    presentIntroIfNeeded()
+                }
+                .task(id: shouldAnimateEntrance) {
+                    await animateEntrance()
+                }
+                .sheet(isPresented: $isClearanceCardPresented) {
+                    LabClearanceLevelsCard(access: labAccess)
+                        .presentationDetents([.medium])
+                        .presentationDragIndicator(.hidden)
+                }
+            }
 
+            if isIntroPresented {
+                TooLabIntroView {
+                    dismissIntro()
+                }
+                .transition(.move(edge: .bottom))
+                .zIndex(1)
+            }
+        }
+        .animation(.spring(response: 0.62, dampingFraction: 0.9), value: isIntroPresented)
+    }
+
+    private var shouldAnimateEntrance: Bool {
+        appState.selectedTab == .progress && !isIntroPresented
+    }
+
+    @MainActor
+    private func animateEntrance() async {
+        // Keep the current composition intact while another tab replaces the Lab.
+        guard shouldAnimateEntrance else { return }
+        isArtworkVisible = false
+        isPanelVisible = false
+        areProductsVisible = false
+        if reduceMotion {
+            isArtworkVisible = true
+            isPanelVisible = true
+            areProductsVisible = true
+            return
+        }
+        do {
+            try await Task.sleep(for: .milliseconds(500))
+            withAnimation(.spring(response: 0.65, dampingFraction: 0.88)) {
+                isPanelVisible = true
+            }
+            try await Task.sleep(for: .milliseconds(450))
+            withAnimation(.easeOut(duration: 0.45)) {
+                isArtworkVisible = true
+                areProductsVisible = true
+            }
+        } catch {
+            // Leaving the Lab cancels the entrance sequence.
+        }
+    }
+
+    @ViewBuilder
+    private var labProducts: some View {
                             if !labAccess.isLabUnlocked {
                                 LabPrototypePreviewSection(access: labAccess)
 
-                                if labAccess.canAccessArcade {
-                                    LabArcadeTeaserCard {
-                                        isArcadePresented = true
-                                    }
-                                }
                             } else {
                                 if labAccess.canAccessPrototypeDrops {
                                     HStack {
@@ -75,55 +192,10 @@ struct ProgressTabView: View {
                                     LabPrototypePreviewSection(access: labAccess)
                                 }
 
-                                if labAccess.canAccessArcade {
-                                    LabArcadeTeaserCard {
-                                        isArcadePresented = true
-                                    }
-                                }
 
                                 LabTodayChecklistCard(access: labAccess)
                                 LabResearchArchiveCard()
                             }
-                        }
-                        .padding(.horizontal, FBSpacing.md)
-                        .padding(.top, -46)
-                        .padding(.bottom, 28)
-                    }
-                }
-                .ignoresSafeArea(edges: .top)
-                .background(Color.white.ignoresSafeArea())
-                .navigationTitle("Too's Lab")
-                .toolbar(.hidden, for: .navigationBar)
-                .onAppear {
-                    presentIntroIfNeeded()
-                    Task { await appState.refreshTooLabProgress() }
-                }
-                .onChange(of: appState.selectedTab) { _, _ in
-                    presentIntroIfNeeded()
-                }
-                .onChange(of: appState.currentCustomerID) { _, _ in
-                    isIntroPresented = false
-                    presentIntroIfNeeded()
-                }
-                .fullScreenCover(isPresented: $isArcadePresented) {
-                    LabArcadeExperimentView()
-                }
-                .sheet(isPresented: $isClearanceCardPresented) {
-                    LabClearanceLevelsCard(access: labAccess)
-                        .presentationDetents([.medium])
-                        .presentationDragIndicator(.hidden)
-                }
-            }
-
-            if isIntroPresented {
-                TooLabIntroView {
-                    dismissIntro()
-                }
-                .transition(.move(edge: .bottom))
-                .zIndex(1)
-            }
-        }
-        .animation(.spring(response: 0.62, dampingFraction: 0.9), value: isIntroPresented)
     }
 
     private func presentIntroIfNeeded() {
@@ -161,23 +233,26 @@ struct ProgressTabView: View {
         return "TooLabHasSeenIntro.user.\(customerID)"
     }
 
-    private func labHero(width: CGFloat, topInset: CGFloat) -> some View {
-        ZStack(alignment: .topLeading) {
-            Image("TooLabHero")
-                .resizable()
-                .scaledToFill()
-                .frame(width: width, height: 430 + topInset)
-                .opacity(0.5)
-                .clipped()
+    private func labHero(width: CGFloat, height: CGFloat) -> some View {
+        Image("TooLabHero")
+            .resizable()
+            .scaledToFill()
+            .frame(width: width, height: height)
+            .clipped()
+            .accessibilityHidden(true)
+    }
 
-            LinearGradient(
-                colors: [.black.opacity(0.12), .black.opacity(0.02), .black.opacity(0.12)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+}
+
+// Keep the product list visible behind the native bar without a system edge scrim.
+private struct LabProductScrollEdgeModifier: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.scrollEdgeEffectHidden(true, for: .bottom)
+        } else {
+            content
         }
-        .frame(width: width, height: 430 + topInset)
-        .clipped()
     }
 }
 
@@ -277,7 +352,7 @@ private struct TooLabIntroRow: View {
     }
 }
 
-private struct TooLabAccessState {
+struct TooLabAccessState {
     let level: Int
     let labXP: Int
     let currentXP: Int
@@ -389,7 +464,7 @@ private struct TooLabAccessState {
     }
 }
 
-private struct TooLabAccessMilestone: Identifiable {
+struct TooLabAccessMilestone: Identifiable {
     let clearance: TooLabClearance
     let title: String
     let subtitle: String
@@ -403,7 +478,7 @@ private struct TooLabAccessMilestone: Identifiable {
     var id: Int { clearance.id }
 }
 
-private struct TooLabPrototypeDrop: Identifiable {
+struct TooLabPrototypeDrop: Identifiable {
     let id: String
     let experimentCode: String
     let name: String
@@ -691,28 +766,9 @@ private struct LabPrototypePreviewSection: View {
     let access: TooLabAccessState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("PROTOTYPE PREVIEW")
-                    .font(.custom("AvenirNext-DemiBold", size: 16))
-                    .tracking(0.8)
-                    .foregroundStyle(FBColors.charcoal)
-
-                Spacer()
-
-                Text("LOCKED")
-                    .font(.custom("AvenirNext-DemiBold", size: 10))
-                    .tracking(0.9)
-                    .foregroundStyle(Color.purple)
-                    .padding(.horizontal, 9)
-                    .frame(height: 24)
-                    .background(Color.purple.opacity(0.10), in: Capsule())
-            }
-
-            VStack(spacing: 10) {
-                ForEach(access.prototypePreviews) { prototype in
-                    PrototypePreviewTile(access: access, prototype: prototype)
-                }
+        VStack(spacing: 10) {
+            ForEach(access.prototypePreviews) { prototype in
+                PrototypePreviewTile(access: access, prototype: prototype)
             }
         }
     }
@@ -789,7 +845,7 @@ private struct PrototypePreviewTile: View {
     }
 }
 
-private struct ActiveFoodExperimentCard: View {
+struct ActiveFoodExperimentCard: View {
     @EnvironmentObject private var appState: AppState
     let access: TooLabAccessState
     let prototype: TooLabPrototypeDrop
@@ -1245,129 +1301,291 @@ private struct LabResearchArchiveCard: View {
     }
 }
 
-private struct LabArcadeExperimentView: View {
+struct LabArcadeExperimentView: View {
+    @EnvironmentObject private var appState: AppState
+    @Environment(\.scenePhase) private var phase
+    @State private var paidRun: ArcadeRun?
     @Environment(\.dismiss) private var dismiss
     @State private var activeGame: LabArcadeGame?
+    @State private var selectedGame: LabArcadeGame?
+    @State private var pendingGame: LabArcadeGame?
 
     var body: some View {
         NavigationStack {
-            ZStack {
+            Group {
                 if let activeGame {
-                    LabArcadeFullscreenGameView(game: activeGame) {
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            self.activeGame = nil
-                        }
+                    LabArcadeFullscreenGameView(game: activeGame, run: paidRun) {
+                        paidRun = nil
+                        Task { await appState.refreshArcadeCredits() }
+                        self.activeGame = nil
                     }
-                    .transition(.opacity)
                 } else {
-                    VStack(alignment: .leading, spacing: 16) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Too's Lab")
-                                .font(.custom("AvenirNext-Regular", size: 12))
-                                .tracking(1.8)
-                                .textCase(.uppercase)
-                                .foregroundStyle(FBColors.muted)
-
-                            Text("Arcade Experiment")
-                                .font(.custom("AvenirNext-DemiBold", size: 28))
-                                .foregroundStyle(FBColors.charcoal)
-                                .lineLimit(1)
-
-                            Text("Tiny lab games, daily rewards.")
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 28) {
+                            RewardsPageHero(artwork: "MyArcadeArtwork", title: "My Arcade")
+                                .overlay(alignment: .topLeading) {
+                                    RewardsPageBackButton { dismiss() }
+                                        .padding(10)
+                                }
+                            ArcadeCreditBalanceView()
+                            VStack(alignment: .leading, spacing: 18) {
+                                HStack {
+                                    Text("Meet your next favourite")
+                                        .font(.custom("AvenirNext-DemiBold", size: 20))
+                                    Spacer()
+                                    Text("\(LabArcadeGame.allCases.count) GAMES")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .tracking(1)
+                                        .foregroundStyle(FBColors.muted)
+                                }
+                                ForEach(LabArcadeGame.allCases) { game in
+                                    Button { selectedGame = game } label: {
+                                        HStack(spacing: 16) {
+                                            ArcadeGameIcon(game: game, size: 96)
+                                            VStack(alignment: .leading, spacing: 6) {
+                                                Text(game.storeTitle)
+                                                    .font(.custom("AvenirNext-DemiBold", size: 17))
+                                                    .foregroundStyle(FBColors.charcoal)
+                                                    .multilineTextAlignment(.leading)
+                                                Text(game.genre)
+                                                    .font(.custom("AvenirNext-Regular", size: 13))
+                                                    .foregroundStyle(FBColors.muted)
+                                                Text(game.isDemo ? "DEMO" : "PUZZLE")
+                                                    .font(.system(size: 9, weight: .bold))
+                                                    .tracking(0.8)
+                                                    .foregroundStyle(game.accent)
+                                                    .padding(.horizontal, 8).padding(.vertical, 4)
+                                                    .background(game.accent.opacity(0.09), in: Capsule())
+                                            }
+                                            Spacer(minLength: 0)
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 12, weight: .semibold))
+                                                .foregroundStyle(FBColors.muted.opacity(0.6))
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityHint("Show game details")
+                                    .accessibilityIdentifier("arcade-details-\(game.rawValue)")
+                                    if game != LabArcadeGame.allCases.last {
+                                        Divider().padding(.leading, 112)
+                                    }
+                                }
+                            }
+                            Text("Pick a game to take a closer look.")
                                 .font(.custom("AvenirNext-Regular", size: 13))
                                 .foregroundStyle(FBColors.muted)
-                                .lineLimit(1)
                         }
-                        .padding(.top, 8)
-
-                        VStack(spacing: 10) {
-                            ForEach(LabArcadeGame.allCases) { game in
-                                Button {
-                                    withAnimation(.easeInOut(duration: 0.18)) {
-                                        activeGame = game
-                                    }
-                                } label: {
-                                    HStack(spacing: 12) {
-                                        Image(systemName: game.symbol)
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundStyle(game == .scratch ? FBColors.muted : Color.purple)
-                                            .frame(width: 42, height: 42)
-                                            .background(FBColors.card, in: RoundedRectangle(cornerRadius: 14))
-
-                                        VStack(alignment: .leading, spacing: 3) {
-                                            Text(game.title)
-                                                .font(.custom("AvenirNext-DemiBold", size: 17))
-                                                .foregroundStyle(FBColors.charcoal)
-
-                                            Text(game.subtitle)
-                                                .font(.custom("AvenirNext-Regular", size: 12))
-                                                .foregroundStyle(FBColors.muted)
-                                        }
-
-                                        Spacer()
-
-                                        Image(systemName: "arrow.right")
-                                            .font(.system(size: 14, weight: .bold))
-                                            .foregroundStyle(FBColors.caramel)
-                                    }
-                                    .padding(12)
-                                    .frame(maxWidth: .infinity)
-                                    .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
-                                    .overlay(RoundedRectangle(cornerRadius: FBCorner.card).stroke(FBColors.line.opacity(0.6)))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-
-                        Spacer()
+                        .padding(.horizontal, 24)
+                        .padding(.top, 12)
+                        .padding(.bottom, 28)
                     }
-                    .padding(.horizontal, FBSpacing.md)
-                    .padding(.bottom, FBSpacing.md)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .transition(.opacity)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(Color.white.ignoresSafeArea())
-            .toolbar {
-                if activeGame == nil {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(FBColors.charcoal)
-                                .frame(width: 34, height: 34)
-                                .background(FBColors.surface, in: Circle())
-                                .overlay(Circle().stroke(FBColors.line.opacity(0.58)))
-                        }
-                    }
-                }
+            .toolbar(.hidden, for: .navigationBar)
+        }
+        .task { await appState.refreshArcadeCredits() }
+        .onChange(of: phase) { _, value in
+            if value == .active { Task { await appState.refreshArcadeCredits() } }
+        }
+        .sheet(item: $selectedGame, onDismiss: {
+            // Finish dismissing the portrait drawer before a demo requests landscape.
+            guard let pendingGame else { return }
+            self.pendingGame = nil
+            activeGame = pendingGame
+        }) { game in
+            ArcadeGameDrawer(game: game) { run in
+                paidRun = run
+                pendingGame = game
+                selectedGame = nil
             }
-            .toolbar(activeGame == nil ? .visible : .hidden, for: .navigationBar)
+            .presentationDetents([.height(480), .large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(30)
         }
     }
 }
 
+private struct ArcadeGameIcon: View {
+    let game: LabArcadeGame
+    let size: CGFloat
+
+    var body: some View {
+        Image(game.artwork)
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .clipShape(RoundedRectangle(cornerRadius: size * 0.23, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: size * 0.23, style: .continuous).stroke(.black.opacity(0.06)))
+            .accessibilityHidden(true)
+    }
+}
+
+private struct ArcadeGameDrawer: View {
+    let game: LabArcadeGame
+    let onPlay: (ArcadeRun) -> Void
+    @EnvironmentObject private var appState: AppState
+    @State private var isStarting = false
+    @State private var startError: String?
+    @State private var ranOutOfCredits = false
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(alignment: .top, spacing: 16) {
+                    ArcadeGameIcon(game: game, size: 80)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(game.storeTitle)
+                            .font(.custom("AvenirNext-DemiBold", size: 21))
+                            .foregroundStyle(FBColors.charcoal)
+                        Text(game.genre)
+                            .font(.custom("AvenirNext-Regular", size: 14))
+                            .foregroundStyle(FBColors.muted)
+                    }.frame(maxWidth: .infinity, alignment: .leading)
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(FBColors.muted)
+                            .frame(width: 30, height: 30)
+                            .background(FBColors.surface, in: Circle())
+                    }.accessibilityLabel("Close game details")
+                }
+                Text(game.explanation)
+                    .font(.custom("AvenirNext-Regular", size: 15))
+                    .foregroundStyle(FBColors.charcoal.opacity(0.8))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineSpacing(3)
+                Label(game.scope, systemImage: game.isDemo ? "gamecontroller" : "square.grid.3x3")
+                    .font(.custom("AvenirNext-DemiBold", size: 12))
+                    .foregroundStyle(game.accent)
+                Text(game.rewardRule)
+                    .font(.custom("AvenirNext-Regular", size: 13))
+                    .foregroundStyle(FBColors.muted)
+                if ranOutOfCredits {
+                    Text("You ran out of credits!")
+                        .font(.custom("AvenirNext-DemiBold", size: 15))
+                        .foregroundStyle(FBColors.charcoal)
+                } else if let startError {
+                    Text(startError)
+                        .font(.custom("AvenirNext-DemiBold", size: 15))
+                        .foregroundStyle(FBColors.charcoal)
+                }
+                Button {
+                    guard !isStarting else { return }
+                    isStarting = true
+                    startError = nil
+                    ranOutOfCredits = false
+                    Task {
+                        defer { isStarting = false }
+                        do { onPlay(try await appState.startArcadeRun(game: game.rawValue)) }
+                        catch {
+                            if case CustomerV2APIError.validation(_, let fields) = error,
+                               fields["credits"] != nil {
+                                ranOutOfCredits = true
+                                await appState.refreshArcadeCredits()
+                            } else {
+                                startError = appState.authenticationStatus == .authenticated
+                                    ? "Arcade is unavailable right now. Please try again later."
+                                    : "Sign in to play."
+                            }
+                        }
+                    }
+                } label: {
+                    Label(isStarting ? "Starting…" : (game.isDemo ? "Play · 1 credit required" : "Play · 1 credit"), systemImage: "play.fill")
+                        .font(.custom("AvenirNext-DemiBold", size: 17))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 15)
+                        .foregroundStyle(.white)
+                        .background(game.accent, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .disabled(isStarting)
+                .accessibilityIdentifier("arcade-play-\(game.rawValue)")
+            }
+            .padding(24)
+            .padding(.top, 12)
+        }
+        .background(Color.white)
+    }
+}
+
 private enum LabArcadeGame: String, CaseIterable, Identifiable {
+    case tooDemo = "too_demo"
     case puzzle
     case memory
     case scratch
+    case labRun = "lab_run"
     case flappyTiel = "flappy_tiel"
     case pong
 
     static var allCases: [LabArcadeGame] {
-        [.puzzle, .memory, .scratch, .flappyTiel]
+        [.tooDemo, .puzzle]
+    }
+
+    var rewardRule: String {
+        switch self {
+        case .tooDemo: "Too’s Rico reward challenge is coming later."
+        default: "Solve the puzzle within 60 seconds to earn 1 Rico coin."
+        }
+    }
+
+    var isDemo: Bool { self == .tooDemo }
+
+    var storeTitle: String {
+        switch self {
+        case .tooDemo: "Too Beat Them All"
+        default: title
+        }
+    }
+
+    var artwork: String {
+        switch self {
+        case .tooDemo: "ArcadeTooIcon"
+        default: "ArcadePuzzleIcon"
+        }
+    }
+
+    var accent: Color {
+        switch self {
+        case .tooDemo: Color(red: 0.66, green: 0.20, blue: 0.45)
+        default: Color(red: 0.43, green: 0.26, blue: 0.73)
+        }
+    }
+
+    var genre: String {
+        switch self {
+        case .tooDemo: "Action · Beat ’em up"
+        default: "Puzzle · Take your time"
+        }
+    }
+
+    var explanation: String {
+        switch self {
+        case .tooDemo: "Join Too for a little street-side mayhem. Jump, bop and swing your spatula through three waves of mischievous enemies."
+        default: "A quiet challenge with Too and Tiel. Slide the tiles into the empty space to rebuild the secret lab picture, one move at a time."
+        }
+    }
+
+    var scope: String {
+        switch self {
+        case .tooDemo: "Demo · 1 stage · 3 waves"
+        default: "Sliding puzzle · A fresh shuffle every time"
+        }
     }
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
+        case .tooDemo: "Too Beat Them All · Demo"
         case .puzzle: "Puzzle"
         case .memory: "Memory"
         case .scratch: "Scratch"
+        case .labRun: "Lab Run"
         case .flappyTiel: "Flappy"
         case .pong: "Too Pong"
         }
@@ -1375,9 +1593,11 @@ private enum LabArcadeGame: String, CaseIterable, Identifiable {
 
     var subtitle: String {
         switch self {
+        case .tooDemo: "One stage. Three waves."
         case .puzzle: "Slide the secret lab scene."
         case .memory: "Match every lab specimen."
         case .scratch: "Experiment not mixed yet."
+        case .labRun: "Too and Tiel dodge lab snacks."
         case .flappyTiel: "Tap Tiel through the pipes."
         case .pong: "Too vs Tiel vertical rally."
         }
@@ -1385,9 +1605,11 @@ private enum LabArcadeGame: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
+        case .tooDemo: "figure.boxing"
         case .puzzle: "square.grid.3x3.fill"
         case .memory: "rectangle.on.rectangle.angled"
         case .scratch: "sparkles"
+        case .labRun: "figure.run"
         case .flappyTiel: "bird.fill"
         case .pong: "circle.grid.cross.fill"
         }
@@ -1396,47 +1618,54 @@ private enum LabArcadeGame: String, CaseIterable, Identifiable {
 
 private struct LabArcadeFullscreenGameView: View {
     let game: LabArcadeGame
+    var run: ArcadeRun? = nil
     let onBack: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Button(action: onBack) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(FBColors.charcoal)
-                        .frame(width: 42, height: 42)
-                        .background(Color.white, in: Circle())
-                        .overlay(Circle().stroke(FBColors.line.opacity(0.58)))
-                }
-                .buttonStyle(.plain)
-
-                Spacer()
-            }
-            .padding(.horizontal, FBSpacing.md)
-            .padding(.top, 8)
-            .padding(.bottom, 6)
-
-            switch game {
-            case .puzzle:
-                LabSlidingPuzzleCard()
-            case .memory:
-                LabMemoryGameCard()
-            case .scratch:
-                LabScratchGameCard()
-            case .flappyTiel:
-                FlappyTielGameCard()
-            case .pong:
-                LabPongGameCard()
-            }
+        switch game {
+        case .tooDemo:
+            ArcadeDemoView(onBack: onBack, run: run)
+        case .puzzle:
+            LabSlidingPuzzleCard(onBack: onBack, run: run)
+        case .memory:
+            LabMemoryGameCard(onBack: onBack)
+        case .scratch:
+            LabScratchGameCard(onBack: onBack)
+        case .labRun:
+            LabRunGameCard(onBack: onBack)
+        case .flappyTiel:
+            FlappyTielGameCard(onBack: onBack)
+        case .pong:
+            LabPongGameCard()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.white.ignoresSafeArea())
+    }
+}
+
+struct LabArcadeBackButton: View {
+    let onBack: () -> Void
+
+    var body: some View {
+        Button(action: onBack) {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 13, weight: .bold))
+
+                Text("Back")
+                    .font(.custom("AvenirNext-DemiBold", size: 13))
+            }
+            .foregroundStyle(FBColors.charcoal)
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .background(.white.opacity(0.88), in: Capsule())
+            .overlay(Capsule().stroke(.white.opacity(0.68)))
+        }
+        .buttonStyle(.plain)
     }
 }
 
 private struct LabScratchGameCard: View {
     @EnvironmentObject private var appState: AppState
+    let onBack: () -> Void
     @State private var symbols = LabScratchTicket.newTicket()
     @State private var revealedBoxes: Set<Int> = []
     @State private var scratchedCellsByBox: [Int: Set<Int>] = [:]
@@ -1461,95 +1690,98 @@ private struct LabScratchGameCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 7) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(Color.purple.opacity(0.82))
-                            .frame(width: 16, height: 16)
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.99, green: 0.83, blue: 0.35),
+                    Color(red: 0.73, green: 0.34, blue: 0.72),
+                    Color(red: 0.15, green: 0.08, blue: 0.24)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-                        Text("LAB GAME")
-                            .font(.custom("AvenirNext-DemiBold", size: 11))
-                            .tracking(1.7)
-                            .foregroundStyle(FBColors.charcoal)
-                    }
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    LabArcadeBackButton(onBack: onBack)
 
-                    Text("Scratch Test")
-                        .font(.custom("AvenirNext-DemiBold", size: 20))
-                        .foregroundStyle(FBColors.charcoal)
-                        .lineLimit(1)
-
-                    Text(isComplete ? "Ticket checked." : "Find 3 Too or 3 Tiel.")
-                        .font(.custom("AvenirNext-Regular", size: 13))
-                        .foregroundStyle(FBColors.muted)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 8) {
-                    Text("\(revealedBoxes.count)/9")
-                        .font(.custom("AvenirNext-DemiBold", size: 12))
-                        .foregroundStyle(FBColors.muted)
+                    Spacer()
 
                     Button("New ticket") {
                         resetTicket()
                     }
-                    .font(.custom("AvenirNext-DemiBold", size: 12))
-                    .foregroundStyle(Color.purple)
+                    .font(.custom("AvenirNext-DemiBold", size: 13))
+                    .foregroundStyle(FBColors.charcoal)
+                    .padding(.horizontal, 12)
+                    .frame(height: 34)
+                    .background(.white.opacity(0.88), in: Capsule())
                     .buttonStyle(.plain)
                 }
-            }
 
-            HStack(spacing: 8) {
-                LabPuzzleStatPill(title: "Played", value: "\(ticketsPlayed)")
-                LabPuzzleStatPill(title: "Wins", value: "\(wins)")
-                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
-            }
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Scratch Test")
+                        .font(.custom("AvenirNext-DemiBold", size: 26))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
-                ForEach(symbols.indices, id: \.self) { index in
-                    LabScratchBoxView(
-                        symbol: symbols[index],
-                        scratchedCells: scratchedCellsByBox[index, default: []],
-                        isRevealed: revealedBoxes.contains(index)
-                    )
-                        .aspectRatio(1, contentMode: .fit)
-                        .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { value in
-                                    scratchBox(at: index, location: value.location)
-                                }
-                        )
-                        .accessibilityLabel(revealedBoxes.contains(index) ? "\(symbols[index].title) scratch box" : "Hidden scratch box")
+                    Text(isComplete ? "Ticket checked." : "Find 3 Too or 3 Tiel.")
+                        .font(.custom("AvenirNext-Regular", size: 14))
+                        .foregroundStyle(.white.opacity(0.82))
+                        .lineLimit(1)
                 }
-            }
-            .padding(12)
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 24))
-            .overlay(RoundedRectangle(cornerRadius: 24).stroke(FBColors.line.opacity(0.54)))
-            .shadow(color: .black.opacity(0.08), radius: 14, y: 8)
 
-            if let completionMessage {
                 HStack(spacing: 8) {
-                    Image(systemName: messageIconName)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(messageTint)
+                    LabPuzzleStatPill(title: "Found", value: "\(revealedBoxes.count)/9")
+                    LabPuzzleStatPill(title: "Wins", value: "\(wins)")
+                    LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
+                }
 
-                    Text(completionMessage)
-                        .font(.custom("AvenirNext-DemiBold", size: 13))
-                        .foregroundStyle(FBColors.charcoal)
-                        .fixedSize(horizontal: false, vertical: true)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
+                    ForEach(symbols.indices, id: \.self) { index in
+                        LabScratchBoxView(
+                            symbol: symbols[index],
+                            scratchedCells: scratchedCellsByBox[index, default: []],
+                            isRevealed: revealedBoxes.contains(index)
+                        )
+                            .aspectRatio(1, contentMode: .fit)
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { value in
+                                        scratchBox(at: index, location: value.location)
+                                    }
+                            )
+                            .accessibilityLabel(revealedBoxes.contains(index) ? "\(symbols[index].title) scratch box" : "Hidden scratch box")
+                    }
                 }
                 .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.purple.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 24))
+                .overlay(RoundedRectangle(cornerRadius: 24).stroke(.white.opacity(0.62)))
+                .shadow(color: .black.opacity(0.18), radius: 18, y: 9)
+
+                if let completionMessage {
+                    HStack(spacing: 8) {
+                        Image(systemName: messageIconName)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(messageTint)
+
+                        Text(completionMessage)
+                            .font(.custom("AvenirNext-DemiBold", size: 13))
+                            .foregroundStyle(FBColors.charcoal)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
+                }
+
+                Spacer(minLength: 0)
             }
+            .padding(.top, 54)
+            .padding(.horizontal, FBSpacing.md)
+            .padding(.bottom, 24)
         }
-        .padding(FBSpacing.md)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var messageIconName: String {
@@ -2191,6 +2423,7 @@ private struct LabPongScoreBadge: View {
 
 private struct LabMemoryGameCard: View {
     @EnvironmentObject private var appState: AppState
+    let onBack: () -> Void
     @State private var cards = LabMemoryCard.shuffledDeck()
     @State private var firstSelectedIndex: Int?
     @State private var isCheckingMatch = false
@@ -2212,83 +2445,87 @@ private struct LabMemoryGameCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 7) {
-                        Image(systemName: "rectangle.on.rectangle.angled")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(Color.purple.opacity(0.82))
-                            .frame(width: 16, height: 16)
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.12, green: 0.55, blue: 0.72),
+                    Color(red: 0.17, green: 0.12, blue: 0.36),
+                    Color(red: 0.95, green: 0.78, blue: 0.28)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-                        Text("LAB GAME")
-                            .font(.custom("AvenirNext-DemiBold", size: 11))
-                            .tracking(1.7)
-                            .foregroundStyle(FBColors.charcoal)
-                    }
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    LabArcadeBackButton(onBack: onBack)
 
-                    Text("Memory Match")
-                        .font(.custom("AvenirNext-DemiBold", size: 20))
-                        .foregroundStyle(FBColors.charcoal)
-                        .lineLimit(1)
-
-                    Text(isComplete ? "All specimens matched." : "Find every matching pair.")
-                        .font(.custom("AvenirNext-Regular", size: 13))
-                        .foregroundStyle(FBColors.muted)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 8) {
-                    Text("\(attempts) tries")
-                        .font(.custom("AvenirNext-DemiBold", size: 12))
-                        .foregroundStyle(FBColors.muted)
+                    Spacer()
 
                     Button("Shuffle") {
                         resetGame()
                     }
-                    .font(.custom("AvenirNext-DemiBold", size: 12))
-                    .foregroundStyle(Color.purple)
+                    .font(.custom("AvenirNext-DemiBold", size: 13))
+                    .foregroundStyle(FBColors.charcoal)
+                    .padding(.horizontal, 12)
+                    .frame(height: 34)
+                    .background(.white.opacity(0.88), in: Capsule())
                     .buttonStyle(.plain)
                 }
-            }
 
-            HStack(spacing: 8) {
-                LabPuzzleStatPill(title: "Best", value: bestAttempts > 0 ? "\(bestAttempts)" : "--")
-                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
-            }
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Memory Match")
+                        .font(.custom("AvenirNext-DemiBold", size: 26))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
 
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(cards.indices, id: \.self) { index in
-                    LabMemoryCardView(card: cards[index])
-                        .aspectRatio(0.72, contentMode: .fit)
-                        .onTapGesture {
-                            selectCard(at: index)
-                        }
-                        .accessibilityLabel(cards[index].isFaceUp || cards[index].isMatched ? "Memory card \(cards[index].title)" : "Hidden memory card")
+                    Text(isComplete ? "All specimens matched." : "Find every matching pair.")
+                        .font(.custom("AvenirNext-Regular", size: 14))
+                        .foregroundStyle(.white.opacity(0.82))
+                        .lineLimit(1)
                 }
-            }
 
-            if let completionMessage {
                 HStack(spacing: 8) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(Color.purple)
-
-                    Text(completionMessage)
-                        .font(.custom("AvenirNext-DemiBold", size: 13))
-                        .foregroundStyle(FBColors.charcoal)
-                        .fixedSize(horizontal: false, vertical: true)
+                    LabPuzzleStatPill(title: "Tries", value: "\(attempts)")
+                    LabPuzzleStatPill(title: "Best", value: bestAttempts > 0 ? "\(bestAttempts)" : "--")
+                    LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
                 }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.purple.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(cards.indices, id: \.self) { index in
+                        LabMemoryCardView(card: cards[index])
+                            .aspectRatio(0.72, contentMode: .fit)
+                            .onTapGesture {
+                                selectCard(at: index)
+                            }
+                            .accessibilityLabel(cards[index].isFaceUp || cards[index].isMatched ? "Memory card \(cards[index].title)" : "Hidden memory card")
+                    }
+                }
+
+                if let completionMessage {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(Color.purple)
+
+                        Text(completionMessage)
+                            .font(.custom("AvenirNext-DemiBold", size: 13))
+                            .foregroundStyle(FBColors.charcoal)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
+                }
+
+                Spacer(minLength: 0)
             }
+            .padding(.top, 54)
+            .padding(.horizontal, FBSpacing.md)
+            .padding(.bottom, 24)
         }
-        .padding(FBSpacing.md)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func selectCard(at index: Int) {
@@ -2484,15 +2721,18 @@ private struct LabArcadeComingSoonCard: View {
 
 private struct LabSlidingPuzzleCard: View {
     @EnvironmentObject private var appState: AppState
+    let onBack: () -> Void
+    var run: ArcadeRun? = nil
+    @State private var moveLog: [Int] = []
+    @State private var rewardDeadline: ContinuousClock.Instant?
+    @State private var retryReward = false
+    @State private var claimingReward = false
     private let gridSize = 3
     @State private var tiles: [Int?] = LabSlidingPuzzleCard.solvedTiles
     @State private var moves = 0
     @State private var hasCompletedCurrentPuzzle = false
     @State private var completionMessage: String?
     @AppStorage("LabPuzzleBestMoves") private var bestMoves = 0
-    private var dailyRewardAmount: Int {
-        appState.tooLabProgress.dailyGameXP
-    }
 
     private static let solvedTiles: [Int?] = Array(0..<8).map(Optional.some) + [nil]
 
@@ -2501,129 +2741,145 @@ private struct LabSlidingPuzzleCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: FBSpacing.sm) {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.98, green: 0.72, blue: 0.24),
+                    Color(red: 0.16, green: 0.62, blue: 0.73),
+                    Color(red: 0.12, green: 0.14, blue: 0.28)
+                ],
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
+            )
+            .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    LabArcadeBackButton(onBack: onBack)
+
+                    Spacer()
+
+                    Button("New game") { onBack() }
+                    .font(.custom("AvenirNext-DemiBold", size: 13))
+                    .foregroundStyle(FBColors.charcoal)
+                    .padding(.horizontal, 12)
+                    .frame(height: 34)
+                    .background(.white.opacity(0.88), in: Capsule())
+                    .buttonStyle(.plain)
+                }
+
                 VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 7) {
-                        Image(systemName: "square.grid.3x3.fill")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(Color.purple.opacity(0.82))
-                            .frame(width: 16, height: 16)
-
-                        Text("LAB GAME")
-                            .font(.custom("AvenirNext-DemiBold", size: 11))
-                            .tracking(1.7)
-                            .foregroundStyle(FBColors.charcoal)
-                    }
-
                     Text("Secret Lab Puzzle")
-                        .font(.custom("AvenirNext-DemiBold", size: 20))
-                        .foregroundStyle(FBColors.charcoal)
+                        .font(.custom("AvenirNext-DemiBold", size: 26))
+                        .foregroundStyle(.white)
                         .lineLimit(1)
 
                     Text(isSolved ? "Experiment complete." : "Slide one tile at a time.")
-                        .font(.custom("AvenirNext-Regular", size: 13))
-                        .foregroundStyle(FBColors.muted)
+                        .font(.custom("AvenirNext-Regular", size: 14))
+                        .foregroundStyle(.white.opacity(0.82))
                         .lineLimit(1)
                 }
 
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 8) {
-                    Text("\(moves) moves")
-                        .font(.custom("AvenirNext-DemiBold", size: 12))
-                        .foregroundStyle(FBColors.muted)
-
-                    Button("Shuffle") {
-                        shuffle()
-                    }
-                    .font(.custom("AvenirNext-DemiBold", size: 12))
-                    .foregroundStyle(Color.purple)
-                    .buttonStyle(.plain)
-                }
-            }
-
-            HStack(spacing: 8) {
-                LabPuzzleStatPill(title: "Best", value: bestMoves > 0 ? "\(bestMoves)" : "--")
-                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
-            }
-
-            GeometryReader { proxy in
-                let boardSize = proxy.size.width
-                let tileSpacing: CGFloat = 2
-                let tileSize = (boardSize - (CGFloat(gridSize - 1) * tileSpacing)) / CGFloat(gridSize)
-
-                ZStack(alignment: .topLeading) {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white)
-
-                    ForEach(tiles.indices, id: \.self) { index in
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.white.opacity(tiles[index] == nil ? 0.86 : 0.38))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(FBColors.line.opacity(0.42))
-                            }
-                            .frame(width: tileSize, height: tileSize)
-                            .position(cellPosition(for: index, tileSize: tileSize, spacing: tileSpacing))
-                    }
-
-                    ForEach(0..<(gridSize * gridSize - 1), id: \.self) { tile in
-                        if let index = tiles.firstIndex(where: { $0 == Optional(tile) }) {
-                            PuzzleTile(
-                                imageName: "TooLabHomeCard",
-                                tile: tile,
-                                gridSize: gridSize,
-                                tileSize: tileSize
-                            )
-                            .frame(width: tileSize, height: tileSize)
-                            .position(cellPosition(for: index, tileSize: tileSize, spacing: tileSpacing))
-                            .accessibilityLabel("Puzzle tile \(tile + 1)")
-                        }
-                    }
-                }
-                .frame(width: boardSize, height: boardSize)
-                .contentShape(Rectangle())
-                .simultaneousGesture(
-                    SpatialTapGesture()
-                        .onEnded { value in
-                            moveTile(at: value.location, tileSize: tileSize, spacing: tileSpacing)
-                        }
-                )
-            }
-            .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(FBColors.line.opacity(0.6)))
-
-            if let completionMessage {
                 HStack(spacing: 8) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(Color.purple)
-
-                    Text(completionMessage)
-                        .font(.custom("AvenirNext-DemiBold", size: 13))
-                        .foregroundStyle(FBColors.charcoal)
-                        .fixedSize(horizontal: false, vertical: true)
+                    LabPuzzleStatPill(title: "Moves", value: "\(moves)")
+                    LabPuzzleStatPill(title: "Best", value: bestMoves > 0 ? "\(bestMoves)" : "--")
+                    TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+                        let remaining = rewardDeadline.map { max(0, Int(ceil(Double(ContinuousClock.now.duration(to: $0).components.seconds) + Double(ContinuousClock.now.duration(to: $0).components.attoseconds) / 1e18))) } ?? 0
+                        LabPuzzleStatPill(title: "Rico", value: hasCompletedCurrentPuzzle ? "Finished" : "\(remaining)s")
+                    }
                 }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.purple.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+
+                GeometryReader { proxy in
+                    let boardSize = min(proxy.size.width, proxy.size.height)
+                    let tileSpacing: CGFloat = 2
+                    let tileSize = (boardSize - (CGFloat(gridSize - 1) * tileSpacing)) / CGFloat(gridSize)
+
+                    ZStack(alignment: .topLeading) {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white)
+
+                        ForEach(tiles.indices, id: \.self) { index in
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.white.opacity(tiles[index] == nil ? 0.86 : 0.38))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(FBColors.line.opacity(0.42))
+                                }
+                                .frame(width: tileSize, height: tileSize)
+                                .position(cellPosition(for: index, tileSize: tileSize, spacing: tileSpacing))
+                        }
+
+                        ForEach(0..<(gridSize * gridSize - 1), id: \.self) { tile in
+                            if let index = tiles.firstIndex(where: { $0 == Optional(tile) }) {
+                                PuzzleTile(
+                                    imageName: "TooLabHomeCard",
+                                    tile: tile,
+                                    gridSize: gridSize,
+                                    tileSize: tileSize
+                                )
+                                .frame(width: tileSize, height: tileSize)
+                                .position(cellPosition(for: index, tileSize: tileSize, spacing: tileSpacing))
+                                .accessibilityLabel("Puzzle tile \(tile + 1)")
+                            }
+                        }
+                    }
+                    .frame(width: boardSize, height: boardSize)
+                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(
+                        SpatialTapGesture()
+                            .onEnded { value in
+                                let boardOrigin = CGPoint(
+                                    x: (proxy.size.width - boardSize) / 2,
+                                    y: (proxy.size.height - boardSize) / 2
+                                )
+                                moveTile(
+                                    at: CGPoint(x: value.location.x - boardOrigin.x, y: value.location.y - boardOrigin.y),
+                                    tileSize: tileSize,
+                                    spacing: tileSpacing
+                                )
+                            }
+                    )
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                if retryReward {
+                    Button("Retry reward sync") { Task { await claimReward() } }
+                        .disabled(claimingReward)
+                }
+                if let completionMessage {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(Color.purple)
+
+                        Text(completionMessage)
+                            .font(.custom("AvenirNext-DemiBold", size: 13))
+                            .foregroundStyle(FBColors.charcoal)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
+                }
             }
+            .padding(.top, 54)
+            .padding(.horizontal, FBSpacing.md)
+            .padding(.bottom, 24)
         }
-        .padding(FBSpacing.md)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            if isSolved {
-                shuffle()
+            guard rewardDeadline == nil else { return }
+            if let run, let board = run.board, board.count == 9 {
+                tiles = board.map { $0 == 8 ? nil : $0 }
+                rewardDeadline = run.rewardDeadline
+            } else {
+                completionMessage = "Start a new game from My Arcade to play."
+                hasCompletedCurrentPuzzle = true
             }
         }
     }
 
-    private var hasClaimedDailyReward: Bool {
-        appState.tooLabProgress.hasClaimed(game: LabArcadeGame.puzzle.rawValue)
-    }
 
     private func moveTile(at location: CGPoint, tileSize: CGFloat, spacing: CGFloat) {
         guard !hasCompletedCurrentPuzzle else {
@@ -2651,6 +2907,7 @@ private struct LabSlidingPuzzleCard: View {
         }
         LabPuzzleSound.playMove()
         moves += 1
+        moveLog.append(index)
 
         if isSolved {
             completePuzzle()
@@ -2668,28 +2925,6 @@ private struct LabSlidingPuzzleCard: View {
         )
     }
 
-    private func shuffle() {
-        var shuffled = Self.solvedTiles
-        var blank = shuffled.count - 1
-
-        for _ in 0..<90 {
-            let neighbors = adjacentIndices(to: blank)
-            guard let next = neighbors.randomElement() else { continue }
-            shuffled.swapAt(blank, next)
-            blank = next
-        }
-
-        if shuffled == Self.solvedTiles,
-           let neighbor = adjacentIndices(to: blank).first {
-            shuffled.swapAt(blank, neighbor)
-        }
-
-        tiles = shuffled
-        moves = 0
-        hasCompletedCurrentPuzzle = false
-        completionMessage = nil
-    }
-
     private func completePuzzle() {
         hasCompletedCurrentPuzzle = true
         LabPuzzleSound.playSuccess()
@@ -2698,14 +2933,20 @@ private struct LabSlidingPuzzleCard: View {
             bestMoves = moves
         }
 
-        if hasClaimedDailyReward {
-            completionMessage = "Puzzle complete. Daily reward already claimed."
-        } else {
-            completionMessage = "Puzzle complete. Claiming LXP..."
-            Task {
-                let awarded = await appState.completeTooLabGame(identifier: LabArcadeGame.puzzle.rawValue, score: moves)
-                completionMessage = awarded > 0 ? "Puzzle complete. Daily +\(awarded) LXP awarded." : "Puzzle complete. Daily reward already claimed."
-            }
+        Task { await claimReward() }
+    }
+
+    @MainActor
+    private func claimReward() async {
+        guard let run, !claimingReward else { return }
+        claimingReward = true; retryReward = false
+        completionMessage = "Checking your Rico reward…"
+        defer { claimingReward = false }
+        do {
+            completionMessage = try await appState.finishArcadeRun(id: run.id, result: ArcadeCompletion(moves: moveLog))
+        } catch {
+            completionMessage = "Reward not synced. Please retry."
+            retryReward = true
         }
     }
 

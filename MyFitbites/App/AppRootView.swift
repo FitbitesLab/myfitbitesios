@@ -11,6 +11,11 @@ struct DebugVnpayPaymentSession: Identifiable {
 struct AppRootView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.scenePhase) private var scenePhase
+    @State private var homeOpacity = 0.0
+
+    private var isPreparingHome: Bool {
+        appState.isLaunchSplashVisible && appState.isHomeReadyForEntrance
+    }
 
     var body: some View {
         ZStack {
@@ -18,6 +23,18 @@ struct AppRootView: View {
                 TabView(selection: $appState.selectedTab) {
                     NavigationStack(path: $appState.homePath) {
                         HomeView()
+                            .background {
+                                NativeBarSlide(isReady: appState.isMainAppVisible)
+                                    .allowsHitTesting(false)
+                            }
+                            .background {
+                                HomeLaunchReadiness(isPrepared: appState.isHomeReadyForEntrance) {
+                                    appState.revealLaunchContent()
+                                }
+                                .allowsHitTesting(false)
+                            }
+                            // A nonzero hidden opacity lets the first frame render under the opaque splash.
+                            .opacity(appState.isMainAppVisible ? homeOpacity : (isPreparingHome ? 0.001 : 0))
                     }
                     .tabItem { Label(AppTab.home.title, systemImage: AppTab.home.symbol) }
                     .tag(AppTab.home)
@@ -43,9 +60,10 @@ struct AppRootView: View {
                 .tint(FBColors.cookieOrange)
                 .toolbarBackground(FBColors.ivory, for: .tabBar)
                 .toolbarBackground(.visible, for: .tabBar)
-                .opacity(appState.isMainAppVisible ? 1 : 0)
-                .animation(.easeInOut(duration: 0.92).delay(0.08), value: appState.isLaunchSplashVisible)
-                .animation(.easeInOut(duration: 0.22), value: appState.authenticationStatus)
+                .opacity(isPreparingHome || appState.isMainAppVisible ? 1 : 0)
+                .animation(nil, value: appState.isMainAppVisible)
+                .allowsHitTesting(appState.isMainAppVisible)
+                .accessibilityHidden(!appState.isMainAppVisible)
 
                 if appState.shouldShowAuthentication {
                     CustomerAuthenticationView()
@@ -62,11 +80,115 @@ struct AppRootView: View {
         .task {
             await appState.bootstrap()
         }
+        .onChange(of: appState.isMainAppVisible, initial: true) { _, isVisible in
+            guard isVisible else { homeOpacity = 0; return }
+            withAnimation(
+                .easeInOut(duration: LaunchTransition.homeDuration).delay(LaunchTransition.homeDelay),
+                completionCriteria: .removed
+            ) {
+                homeOpacity = 1
+            } completion: {
+                Task { await appState.finishLaunchEntrance() }
+            }
+        }
+        .onOpenURL { appState.openWidgetURL($0) }
+        .sheet(item: $appState.widgetPresentation) { presentation in
+            WidgetDestinationView(presentation: presentation)
+                .environmentObject(appState)
+        }
+        .onChange(of: appState.authenticationStatus) { _, _ in
+            appState.consumePendingWidgetRoute()
+        }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task {
                 await appState.refreshAuthenticationSessionIfNeededForForeground()
             }
+        }
+    }
+
+}
+
+private struct NativeBarSlide: UIViewControllerRepresentable {
+    let isReady: Bool
+
+    func makeUIViewController(context: Context) -> Controller { Controller() }
+
+    func updateUIViewController(_ controller: Controller, context: Context) {
+        controller.isReady = isReady
+        controller.updateSlide()
+    }
+
+    static func dismantleUIViewController(_ controller: Controller, coordinator: ()) {
+        controller.restore()
+    }
+
+    final class Controller: UIViewController {
+        var isReady = false
+        private var hasEntered = false
+        private weak var bar: UITabBar?
+        private var animator: UIViewPropertyAnimator?
+
+        override func loadView() {
+            view = UIView()
+            view.backgroundColor = .clear
+            view.isUserInteractionEnabled = false
+        }
+
+        override func didMove(toParent parent: UIViewController?) {
+            super.didMove(toParent: parent)
+            updateSlide()
+        }
+
+        override func viewDidLayoutSubviews() {
+            super.viewDidLayoutSubviews()
+            updateSlide()
+        }
+
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            updateSlide()
+        }
+
+        func updateSlide() {
+            guard let nativeBar = tabBarController?.tabBar else { return }
+            bar = nativeBar
+            guard !hasEntered || !isReady else { return }
+            let distance = nativeBar.bounds.height + (nativeBar.window?.safeAreaInsets.bottom ?? 0) + 24
+            if !isReady {
+                animator?.stopAnimation(true)
+                animator = nil
+                hasEntered = false
+                UIView.performWithoutAnimation {
+                    nativeBar.transform = CGAffineTransform(translationX: 0, y: distance)
+                }
+                nativeBar.isUserInteractionEnabled = false
+                nativeBar.accessibilityElementsHidden = true
+                return
+            }
+            guard nativeBar.window != nil, nativeBar.bounds.height > 0 else { return }
+            hasEntered = true
+            UIView.performWithoutAnimation {
+                nativeBar.transform = CGAffineTransform(translationX: 0, y: distance)
+            }
+            nativeBar.isUserInteractionEnabled = true
+            nativeBar.accessibilityElementsHidden = false
+            // Animate position only; the native material stays at its normal opacity.
+            let entrance = UIViewPropertyAnimator(
+                duration: UIAccessibility.isReduceMotionEnabled ? 0 : 0.45,
+                curve: .easeOut
+            ) {
+                nativeBar.transform = .identity
+            }
+            animator = entrance
+            entrance.startAnimation()
+        }
+
+        func restore() {
+            animator?.stopAnimation(true)
+            bar?.transform = .identity
+            bar?.isUserInteractionEnabled = true
+            bar?.accessibilityElementsHidden = false
         }
     }
 }
@@ -99,6 +221,8 @@ final class AppState: ObservableObject {
     }
     @Published var dashboardHeroWeatherCondition: DashboardHeroWeatherCondition?
     @Published var isLaunchSplashVisible = true
+    @Published private(set) var isHomeReadyForEntrance = false
+    @Published private(set) var hasFinishedLaunchEntrance = false
     @Published var authenticationStatus: CustomerAuthenticationStatus = .unknown
     @Published var authenticationMode: CustomerAuthenticationMode = .signIn
     @Published var authenticationErrorMessage: String?
@@ -113,6 +237,8 @@ final class AppState: ObservableObject {
     @Published var ricoStoreErrorMessage: String?
     @Published var ricoPurchaseIDsInFlight: Set<String> = []
     @Published var currentCustomerID: Int?
+    @Published var pendingWidgetRoute: WidgetRoute?
+    @Published var widgetPresentation: WidgetPresentation?
     #if DEBUG
     @Published var debugVnpayPaymentSession: DebugVnpayPaymentSession?
     @Published var debugVnpayPaymentStatus: CustomerV2PaymentStatusPayload?
@@ -125,6 +251,10 @@ final class AppState: ObservableObject {
     let catalogRepository: CatalogRepository
     let rewardsRepository: RewardsRepository
     let dashboardHeroWeatherProvider: any DashboardHeroWeatherProviding
+    @Published var arcadeCredits: ArcadeCredits?
+    var arcadeStartKeys: [String: String] = UserDefaults.standard.dictionary(forKey: "myfitbites.arcadeStartKeys") as? [String: String] ?? [:] {
+        didSet { UserDefaults.standard.set(arcadeStartKeys, forKey: "myfitbites.arcadeStartKeys") }
+    }
     let customerAPIClient: CustomerV2APIClient?
     private var ricoPurchaseIntentKeys: [String: String] = [:]
     private var hasBootstrapped = false
@@ -173,18 +303,54 @@ final class AppState: ObservableObject {
         async let minimumSplash: Void = holdLaunchSplash()
         await refreshAuthenticationSession()
 
-        let customerRefresh = Task { [weak self] in
-            guard let self, self.authenticationStatus == .authenticated else { return }
-            await self.refreshCustomerData()
+        if authenticationStatus == .authenticated {
+            await prepareHomeForLaunch()
         }
 
         _ = await minimumSplash
 
-        withAnimation(.easeInOut(duration: 0.78)) {
-            isLaunchSplashVisible = false
+        if authenticationStatus == .authenticated {
+            // Home reports readiness after its prepared content has had a layout pass.
+            isHomeReadyForEntrance = true
+        } else {
+            revealLaunchContent()
         }
+    }
 
-        _ = await customerRefresh.value
+    private func prepareHomeForLaunch() async {
+        let catalog = catalogRepository.catalog()
+        let product = catalog.products.first { $0.id == catalog.homePromotion?.productID }
+            ?? catalog.products.first { $0.id == catalog.featuredProductID }
+            ?? catalog.products.first
+        let bannerURL = catalog.homePromotion?.imageURL ?? product?.imageURL
+        let heroName = DashboardHeroResolver().resolve().assetName
+
+        async let hero: Void = StoreImagePreloader.prepareAsset(named: heroName)
+        if let bannerURL {
+            _ = await StoreImagePreloader.prepareCachedImage(for: bannerURL)
+        }
+        _ = await hero
+    }
+
+    func revealLaunchContent() {
+        guard isLaunchSplashVisible else { return }
+        withAnimation(.easeInOut(duration: LaunchTransition.splashDuration), completionCriteria: .removed) {
+            isLaunchSplashVisible = false
+        } completion: {
+            if self.authenticationStatus != .authenticated {
+                Task { await self.finishLaunchEntrance() }
+            }
+        }
+    }
+
+    func finishLaunchEntrance() async {
+        guard !hasFinishedLaunchEntrance else { return }
+        hasFinishedLaunchEntrance = true
+        // The session was just checked. Foreground callbacks must not repeat startup work.
+        lastForegroundSessionRefreshAt = Date()
+        guard authenticationStatus == .authenticated else { return }
+        await refreshCustomerData()
+        consumePendingWidgetRoute()
         #if DEBUG
         await recoverDebugVnpayPaymentIfNeeded()
         #endif
@@ -196,6 +362,7 @@ final class AppState: ObservableObject {
     }
 
     func refreshCustomerData() async {
+        guard hasFinishedLaunchEntrance else { return }
         var didRefresh = false
 
         didRefresh = await refreshDashboardAndRewardsCaches() || didRefresh
@@ -353,6 +520,7 @@ final class AppState: ObservableObject {
                 applyAuthenticatedUser(user)
                 authenticationStatus = .authenticated
             } else {
+                WidgetSnapshotBridge.shared.signOut()
                 currentCustomerID = nil
                 tooLabProgress = .empty
                 authenticationStatus = .guest
@@ -363,7 +531,7 @@ final class AppState: ObservableObject {
     }
 
     func refreshAuthenticationSessionIfNeededForForeground() async {
-        guard authenticationStatus == .authenticated else { return }
+        guard hasFinishedLaunchEntrance, authenticationStatus == .authenticated else { return }
 
         let now = Date()
         if let lastForegroundSessionRefreshAt, now.timeIntervalSince(lastForegroundSessionRefreshAt) < 300 {
@@ -374,7 +542,7 @@ final class AppState: ObservableObject {
         await refreshAuthenticationSession()
 
         if authenticationStatus == .authenticated {
-            await refreshTooLabProgress()
+            await refreshCustomerData()
         }
     }
 
@@ -455,6 +623,10 @@ final class AppState: ObservableObject {
     }
 
     func signOut() async {
+        WidgetSnapshotBridge.shared.signOut()
+        pendingWidgetRoute = nil
+        widgetPresentation = nil
+        arcadeCredits = nil
         await customerAPIClient?.logout()
         currentCustomerID = nil
         tooLabProgress = .empty
@@ -806,6 +978,7 @@ final class AppState: ObservableObject {
     #endif
 
     private func applyAuthenticatedUser(_ user: CustomerAuthUser) {
+        WidgetSnapshotBridge.shared.begin(userID: user.id)
         if let currentCustomerID, currentCustomerID != user.id {
             tooLabProgress = .empty
         }

@@ -108,11 +108,17 @@ final class CustomerV2APIClient {
     }
 
     func dashboard() async throws -> CustomerV2DashboardPayload {
-        try await get("/app-v2/data/dashboard")
+        let ticket = await WidgetSnapshotBridge.shared.ticket
+        let payload: CustomerV2DashboardPayload = try await get("/app-v2/data/dashboard")
+        await WidgetSnapshotBridge.shared.receive(payload, ticket: ticket)
+        return payload
     }
 
     func store() async throws -> CustomerV2StorePayload {
-        try await get("/app-v2/data/store")
+        let ticket = await WidgetSnapshotBridge.shared.ticket
+        let payload: CustomerV2StorePayload = try await get("/app-v2/data/store")
+        await WidgetSnapshotBridge.shared.receive(payload, ticket: ticket)
+        return payload
     }
 
     func sessionData() async throws -> CustomerV2SessionPayload {
@@ -173,7 +179,10 @@ final class CustomerV2APIClient {
     }
 
     func rewardsSummary() async throws -> CustomerV2RewardsSummaryPayload {
-        try await get("/app-v2/rewards/summary")
+        let ticket = await WidgetSnapshotBridge.shared.ticket
+        let payload: CustomerV2RewardsSummaryPayload = try await get("/app-v2/rewards/summary")
+        await WidgetSnapshotBridge.shared.receive(payload, ticket: ticket)
+        return payload
     }
 
     func rewardsIndex() async throws -> CustomerV2RewardsIndexPayload {
@@ -200,8 +209,47 @@ final class CustomerV2APIClient {
         let _: EmptyResponse = try await delete("/app-v2/reward-redemption-sessions/\(id)")
     }
 
+    func arcadeSummary() async throws -> ArcadeSummary {
+        let ticket = await WidgetSnapshotBridge.shared.ticket
+        let payload: ArcadeSummary = try await get("/app-v2/arcade")
+        await WidgetSnapshotBridge.shared.receive(payload, ticket: ticket)
+        return payload
+    }
+
+    func startArcadeRun(game: String, requestKey: String) async throws -> ArcadeStart {
+        try await post("/app-v2/arcade/runs", body: ["game": game], headers: ["Idempotency-Key": requestKey])
+    }
+
+    func chargeArcadeLife(id: String, requestKey: String) async throws -> ArcadeLifeCharge {
+        try await post("/app-v2/arcade/runs/\(id)/life-loss", body: [String: String](), headers: ["Idempotency-Key": requestKey])
+    }
+
+    func completeArcadeRun(id: String, result: ArcadeCompletion) async throws -> ArcadeAward {
+        try await post("/app-v2/arcade/runs/\(id)/complete", body: result)
+    }
+
     func ricoStore() async throws -> CustomerV2RicoStorePayload {
         try await get("/app-v2/rico/store")
+    }
+
+    func comic(id: String) async throws -> CustomerV2ComicPayload {
+        try await get("/app-v2/rico/comics/\(id)")
+    }
+
+    func comicPage(id: String, page: Int) async throws -> UIImage {
+        var request = URLRequest(url: url(for: "/app-v2/rico/comics/\(id)/pages/\(page)"))
+        request.timeoutInterval = 30
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        applyNativeHeaders(to: &request)
+        let (data, response) = try await session.data(for: request)
+        guard let response = response as? HTTPURLResponse,
+              response.statusCode == 200,
+              response.mimeType?.hasPrefix("image/") == true,
+              let image = UIImage(data: data) else {
+            throw URLError(.badServerResponse)
+        }
+        return image
     }
 
     func purchaseRicoStoreItem(id: String, idempotencyKey: String) async throws -> CustomerV2RicoPurchasePayload {
@@ -221,7 +269,10 @@ final class CustomerV2APIClient {
     }
 
     func tooLabSummary() async throws -> CustomerV2TooLabEnvelope {
-        try await get("/app-v2/too-lab")
+        let ticket = await WidgetSnapshotBridge.shared.ticket
+        let payload: CustomerV2TooLabEnvelope = try await get("/app-v2/too-lab")
+        if let summary = payload.tooLab { await WidgetSnapshotBridge.shared.receive(summary, ticket: ticket) }
+        return payload
     }
 
     func completeTooLabGame(identifier: String, score: Int = 0) async throws -> CustomerV2TooLabAwardPayload {
@@ -433,11 +484,17 @@ final class APIBackedCatalogRepository: CatalogRepository, CustomerDataRefreshin
     private let client: CustomerV2APIClient
     private let fallback: CatalogRepository
     private var cachedCatalog: StoreCatalog
+    private static let cacheKey = "StoreCatalog.lastSuccessful.v1"
 
     init(client: CustomerV2APIClient, fallback: CatalogRepository) {
         self.client = client
         self.fallback = fallback
-        self.cachedCatalog = fallback.catalog()
+        if let data = UserDefaults.standard.data(forKey: Self.cacheKey),
+           let saved = try? JSONDecoder().decode(StoreCatalog.self, from: data) {
+            self.cachedCatalog = saved
+        } else {
+            self.cachedCatalog = StoreCatalog(categories: [], products: [], featuredProductID: "")
+        }
     }
 
     func catalog() -> StoreCatalog {
@@ -451,6 +508,9 @@ final class APIBackedCatalogRepository: CatalogRepository, CustomerDataRefreshin
         else { return }
 
         cachedCatalog = catalog
+        if let data = try? JSONEncoder().encode(catalog) {
+            UserDefaults.standard.set(data, forKey: Self.cacheKey)
+        }
     }
 }
 
@@ -920,6 +980,17 @@ enum CustomerV2APIError: LocalizedError {
 
 struct CustomerV2StorePayload: Decodable {
     let chapters: [Chapter]?
+    var iosHomePromotion: Promotion? = nil
+
+    struct Promotion: Decodable {
+        let title: String?
+        let eyebrow: String?
+        let description: String?
+        let cta: String?
+        let image: String?
+        let position: String?
+        let productId: Int?
+    }
 
     struct Chapter: Decodable {
         let name: String?
@@ -1067,7 +1138,7 @@ enum CustomerV2Mapper {
             ricoWallet: RicoWalletSummary(
                 balance: wallet?.balance ?? fallback.ricoWallet.balance,
                 todayEarned: wallet?.todayEarned ?? fallback.ricoWallet.todayEarned,
-                dailyMax: wallet?.dailyMax ?? fallback.ricoWallet.dailyMax
+                dailyMax: wallet?.dailyMax
             ),
             ricoStoreItems: (store?.items ?? []).compactMap(ricoStoreItem(from:))
         )
@@ -1161,7 +1232,18 @@ enum CustomerV2Mapper {
         return StoreCatalog(
             categories: categories,
             products: products,
-            featuredProductID: products.first?.id ?? fallback.featuredProductID
+            featuredProductID: products.first?.id ?? fallback.featuredProductID,
+            homePromotion: payload.iosHomePromotion.map { promotion in
+                HomeProductPromotion(
+                    title: nonEmpty(promotion.title) ?? "",
+                    eyebrow: nonEmpty(promotion.eyebrow) ?? "NEW AT FITBITES",
+                    subtitle: nonEmpty(promotion.description) ?? "",
+                    cta: nonEmpty(promotion.cta) ?? "Shop now",
+                    imageURL: webURL(from: promotion.image),
+                    imagePosition: promotion.position ?? "center",
+                    productID: promotion.productId.map { "api-\($0)" }
+                )
+            }
         )
     }
 
@@ -1518,7 +1600,7 @@ struct LocalRewardsRepository: RewardsRepository {
             freeFitbitesHistory: [],
             freeFitbitesRedemptionEnabled: false,
             achievements: [],
-            ricoWallet: RicoWalletSummary(balance: 0, todayEarned: 0, dailyMax: 5),
+            ricoWallet: RicoWalletSummary(balance: 0, todayEarned: 0, dailyMax: nil),
             ricoStoreItems: []
         )
     }
@@ -1618,5 +1700,20 @@ enum FixtureCatalog {
             pickupOnly: false,
             toppings: toppings
         )
+    }
+}
+
+
+struct CustomerV2ComicPayload: Decodable {
+    let id: String
+    let title: String
+    let isOwned: Bool
+    let pageCount: Int
+    let pages: [Page]
+
+    struct Page: Decodable, Identifiable {
+        let number: Int
+        let caption: String
+        var id: Int { number }
     }
 }

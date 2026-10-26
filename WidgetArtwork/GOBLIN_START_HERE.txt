@@ -1,0 +1,47 @@
+MYFITBITES WIDGET ASSET PACK — V1
+
+12 individual PNG assets: 4 Too poses, 5 Tiel poses, 3 full-bleed backgrounds.
+Generated with the built-in image-generation tool from approved user references.
+Character PNGs have verified alpha transparency. Backgrounds are opaque.
+
+USE
+Layer a background, a character PNG, then native SwiftUI text and indicators.
+Use aspectFit for characters; reserve safe space for crests, wings and feet.
+Do not stretch artwork. Source canvases differ slightly: align visual feet and
+adjust display size per pose so characters do not jump in size between states.
+Tiel should appear shorter than Too when shown together.
+Backgrounds are landscape masters. Crop with aspectFill for widget families;
+keep the text area quiet. iOS provides widget clipping; no painted corners.
+
+STATE MAPPING
+Streak active: tiel_streak_approving
+Order needed today: tiel_streak_wings_crossed
+Three days since last qualifying order: tiel_streak_tiny_dinosaur
+Returning customer: tiel_welcome_back
+Cookie balance: too_cookie_jar or tiel_guarding_cookies
+Welcome/reorder shortcut: too_welcome
+Reward available: too_reward_celebration
+Too's Lab discovery: too_lab_discovery
+
+Keep all balances, dates, streak counts, prices and reward information native.
+Match existing business rules and order status. No made-up bonus values.
+Humour is optional. Use a warm return message after inactivity.
+Keep Too's cheeks WHITE and his black BED RATS shirt intact.
+Tiel has natural ORANGE cheeks and a cream apron.
+Use these approved illustrations directly; do not redraw with generic mascots.
+
+ART DIRECTION / PROMPTS
+All characters: single full-body reference-matched soft detailed cartoon bird,
+neutral soft lighting, isolated transparent background, no scenery or labels.
+Too: white cockatoo, white swept crest, charcoal beak and feet, black BED RATS
+shirt, no pink/orange/red cheek patches. Poses: wave; hug cookie jar; raise wings
+with golden star; inspect cookie with magnifier.
+Tiel: short chubby cream cockatiel, yellow face and crest, orange cheek patches,
+charcoal beak and feet, cream buttoned apron. Poses: approving side-eye with wing
+on hip; crossed wings; furious open-beak squawk; restrained welcome wave;
+protectively hug cookie jar.
+Backgrounds: wide illustrated warm cafe atmosphere with quiet space for native
+text, no lettering, logos or characters. Cream morning cafe; dark espresso cafe;
+ivory/sage/gold lab with edge glassware.
+
+These are artwork assets, not working widgets. Goblin implements WidgetKit UI.

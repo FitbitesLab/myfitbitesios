@@ -6,16 +6,160 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		03FE1933F7355533D4C7191A /* AdventureSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB2D6D7A2B5F2BB6CD40C08 /* AdventureSceneView.swift */; };
+		D85C3227E10ED75D44B19CA9 /* ArcadeTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A251F8756766949A3CF637 /* ArcadeTiming.swift */; };
+		AF4DFBC74865B1D6622A7D9A /* ArenaEncounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2722E7FB4FD75CF293EBC944 /* ArenaEncounter.swift */; };
+		7AEF7020A88BE2365EF21C1D /* CombatRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4343F7018B0A982D1328FB5 /* CombatRules.swift */; };
+		09ABCB04577BB9298D117223 /* KitchenCombat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83B801043BB0E082DAC7C51E /* KitchenCombat.swift */; };
+		3037B186AC5E29EF803B4D17 /* NavigationProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F9C6A124B97539D37A45B5 /* NavigationProbe.swift */; };
+		9B8C3F20AD0FE0686431B8B5 /* SpriteAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADEA7BAE92B022104059835 /* SpriteAssets.swift */; };
+		8E882BEB26BEA842964DA62D /* StreetScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413D05E4C710A84283E971B9 /* StreetScene.swift */; };
+		53EA6F7C54B03125F30F9428 /* TielSoundEffects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F34F660208748F1E8AB0E94 /* TielSoundEffects.swift */; };
+		8087067F8F19F89AC2852620 /* TielSoundEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49985D48725D7245B7EB29D3 /* TielSoundEvents.swift */; };
+		F4CAEF9044902E29A5373078 /* TielSoundPerformance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F0AEDC90C6250F6DFE1B25E /* TielSoundPerformance.swift */; };
+		AD0037CA467FBF896EF23AF9 /* TooAdventureApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7A7589E9C0EBD0A0C8BB77F /* TooAdventureApp.swift */; };
+		E77317B0C2D71D87EC16658D /* TooKeyboardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6465A04E08E4385328BEE5FA /* TooKeyboardState.swift */; };
+		1D2CA86FC3ACF69CDBEF9C7F /* TooKeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEDE2B698C57A51956C5F6AC /* TooKeyboardView.swift */; };
+		49FECD0F5542861ECF2B0DD5 /* TooLegCombo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B61E7C60A8854C801862121 /* TooLegCombo.swift */; };
+		E7B2315AD021E327E6F687AE /* TooNado.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5640A6A58532BB48CCC3E53 /* TooNado.swift */; };
+		294885880BE793583DF5F0CE /* Resources/dev-cup-01.png in Resources */ = {isa = PBXBuildFile; fileRef = 050FC6E54F6191CE7D06524F /* Resources/dev-cup-01.png */; };
+		DA5CA80CC374E9CB7650E4BF /* Resources/dev-presso-hit-01.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA074289E78DC24AA8DA2EC /* Resources/dev-presso-hit-01.png */; };
+		21A68E4C52113C30FFFB74E0 /* Resources/dev-presso-hit-02.png in Resources */ = {isa = PBXBuildFile; fileRef = 637F1BDD8712EA7E368B3845 /* Resources/dev-presso-hit-02.png */; };
+		235480ABECB207B55A8B9EC1 /* Resources/dev-presso-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = 2FF17081EB77816E21A2A51F /* Resources/dev-presso-spritesheet.png */; };
+		36D83D2B35F702E72C3E7DAC /* Resources/goblin-hit-kick-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = D3D22644D0C5AE7B0E1BE18B /* Resources/goblin-hit-kick-spritesheet.png */; };
+		C3DFEC64760EF3EF8B327BC1 /* Resources/goblin-wobble-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = AB9DA081CF75B5826EA07662 /* Resources/goblin-wobble-spritesheet.png */; };
+		FF255BAEBEF86777206717F0 /* Resources/neighborhood-panorama.png in Resources */ = {isa = PBXBuildFile; fileRef = E3BEE6FEF09B3FDDAB59BEC8 /* Resources/neighborhood-panorama.png */; };
+		9A355FB36A65D7117E5EC0F9 /* Resources/protein-sandwich-01.png in Resources */ = {isa = PBXBuildFile; fileRef = 5DC060D0532A9D82B8EBC45C /* Resources/protein-sandwich-01.png */; };
+		5B72897A9B12BFCB8EB0BEB5 /* Resources/protein-toaster-hit-01.png in Resources */ = {isa = PBXBuildFile; fileRef = 1107171A0659B0FE6A75CE9B /* Resources/protein-toaster-hit-01.png */; };
+		575AC895160DF19EA33CB4A0 /* Resources/protein-toaster-hit-02.png in Resources */ = {isa = PBXBuildFile; fileRef = 6E5D31405354DBAC5D0E43C7 /* Resources/protein-toaster-hit-02.png */; };
+		FD94C056E93A6FCA5080ED8A /* Resources/protein-toaster-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = DC3CECFB16DA7F514F6149DD /* Resources/protein-toaster-spritesheet.png */; };
+		1EE7F4919617027B1AB260E3 /* Resources/spatula-pickup-trimmed.png in Resources */ = {isa = PBXBuildFile; fileRef = 4CA78FBA46E851AF03181334 /* Resources/spatula-pickup-trimmed.png */; };
+		ED01B8CCC34446E485737EA6 /* Resources/sprite-bounds.json in Resources */ = {isa = PBXBuildFile; fileRef = A645E451D831A991A01158F7 /* Resources/sprite-bounds.json */; };
+		0994F279E040A88294B80AFE /* Resources/tiel-checkpoint.wav in Resources */ = {isa = PBXBuildFile; fileRef = 38107B883D2EAAFD77807276 /* Resources/tiel-checkpoint.wav */; };
+		252226BE5A797BC3D2821CDE /* Resources/tiel-chubby-jump-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = 9A0CA8DBA941BCC93B3DD03D /* Resources/tiel-chubby-jump-spritesheet.png */; };
+		01523B248FE9119ED7FA994D /* Resources/tiel-coin.wav in Resources */ = {isa = PBXBuildFile; fileRef = 916E47FD434559A16C2BF4C5 /* Resources/tiel-coin.wav */; };
+		1FFA608DDB82BE9C4E92B255 /* Resources/tiel-cookie.wav in Resources */ = {isa = PBXBuildFile; fileRef = D40D6EC89AF393C6AE5C8DC1 /* Resources/tiel-cookie.wav */; };
+		9B568BCA4FBB0B2D34F2B86A /* Resources/tiel-crate.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1AD77786335C2F775E4AFB42 /* Resources/tiel-crate.wav */; };
+		166F634EB17DBA4623684FE3 /* Resources/tiel-dialogue.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6C93D0AFFAC005E195B550C5 /* Resources/tiel-dialogue.wav */; };
+		D432F5D8043CA707B678DCC2 /* Resources/tiel-jump.wav in Resources */ = {isa = PBXBuildFile; fileRef = 3778DB78077E5B2731039132 /* Resources/tiel-jump.wav */; };
+		B624D8BCB41BC5ADB5B2DA75 /* Resources/tiel-projectile.wav in Resources */ = {isa = PBXBuildFile; fileRef = 70DAE683009EC3249F760F47 /* Resources/tiel-projectile.wav */; };
+		CAB4768DB7D16C8A3F505CB9 /* Resources/tiel-rewardCash.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1B940842A790DFD8D87A2B9F /* Resources/tiel-rewardCash.wav */; };
+		A9820268CD3BAEDF240A6EAB /* Resources/tiel-rewardRico.wav in Resources */ = {isa = PBXBuildFile; fileRef = 288367585743C5E17BCE193F /* Resources/tiel-rewardRico.wav */; };
+		6397178D3221EFABDA0B14E9 /* Resources/tiel-rewardStamp.wav in Resources */ = {isa = PBXBuildFile; fileRef = 044618822CC1DA91D8DF75CA /* Resources/tiel-rewardStamp.wav */; };
+		342329322E3013C5088FA515 /* Resources/tiel-select.wav in Resources */ = {isa = PBXBuildFile; fileRef = 4B029706928D3BAE45D5730E /* Resources/tiel-select.wav */; };
+		C521697AC71141CFE05108E7 /* Resources/tiel-splash.wav in Resources */ = {isa = PBXBuildFile; fileRef = 14C6B22642D368F27DD566CC /* Resources/tiel-splash.wav */; };
+		B6BDEE140D14340270088BC1 /* Resources/tiel-stomp.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5AB870F500FE96B49AE7D912 /* Resources/tiel-stomp.wav */; };
+		E51CA0600E13190E3EBE4D71 /* Resources/tiel-thunder.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5C0D130028446804E8FE7B75 /* Resources/tiel-thunder.wav */; };
+		89C57D86CB834BDF55E0C32E /* Resources/too-hit-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = 6D2C17487C9D82151CBF7D9E /* Resources/too-hit-spritesheet.png */; };
+		5C1C2E8B5CF5F4B00368D192 /* Resources/too-jump-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = EA844B7E25ABC8AD569B409E /* Resources/too-jump-spritesheet.png */; };
+		4BD4505BDB38C41796C34925 /* Resources/too-knockdown-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = 5EE356867DF4BC01A115B543 /* Resources/too-knockdown-spritesheet.png */; };
+		44F80852B6DC3371F3954F9D /* Resources/too-leg-combo-01.png in Resources */ = {isa = PBXBuildFile; fileRef = 22252284C8E0EDBAB8074FB2 /* Resources/too-leg-combo-01.png */; };
+		9E78461472B56DA747F2C9C7 /* Resources/too-leg-combo-02.png in Resources */ = {isa = PBXBuildFile; fileRef = 4D5C141DA3AA7B6AE14EFA01 /* Resources/too-leg-combo-02.png */; };
+		F6DA95A56D9E1007FA627ECF /* Resources/too-leg-combo-03.png in Resources */ = {isa = PBXBuildFile; fileRef = 5D8900FC15742BE6A889563F /* Resources/too-leg-combo-03.png */; };
+		98395BB4AFCA70EC9461212C /* Resources/too-leg-combo-04.png in Resources */ = {isa = PBXBuildFile; fileRef = 03EEBC87395A4F2C120123DF /* Resources/too-leg-combo-04.png */; };
+		785AEC7BA539CB49E1A2EEEF /* Resources/too-leg-combo-05.png in Resources */ = {isa = PBXBuildFile; fileRef = 80B6582CA51207BF7DF7B843 /* Resources/too-leg-combo-05.png */; };
+		C27D3225A6926C378DC47684 /* Resources/too-leg-combo-06.png in Resources */ = {isa = PBXBuildFile; fileRef = A4E990A3D03F69AF58B7C78C /* Resources/too-leg-combo-06.png */; };
+		8054BB0F5F80D9260EB0545A /* Resources/too-leg-combo-07.png in Resources */ = {isa = PBXBuildFile; fileRef = 7EB5D019962272E5A57753C0 /* Resources/too-leg-combo-07.png */; };
+		FA087FC0AFA01675CC432759 /* Resources/too-leg-combo-08.png in Resources */ = {isa = PBXBuildFile; fileRef = 9086057F1C586BBEF083A311 /* Resources/too-leg-combo-08.png */; };
+		EB8637B166E2F1748CAC63F7 /* Resources/too-leg-combo-09.png in Resources */ = {isa = PBXBuildFile; fileRef = D1F5795E1459AE61C78D457C /* Resources/too-leg-combo-09.png */; };
+		4E3527478E5989451E3798B6 /* Resources/too-nado-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = E40BDFC6399C4372BC360AAE /* Resources/too-nado-spritesheet.png */; };
+		0F6666127472D98B7939DDB1 /* Resources/too-nado-wind.png in Resources */ = {isa = PBXBuildFile; fileRef = DD8EF2A385A1DB97B3513895 /* Resources/too-nado-wind.png */; };
+		4458FA5010F596BA90705174 /* Resources/too-punch-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = D82ACCFCC0725036988B6A6C /* Resources/too-punch-spritesheet.png */; };
+		56DCA6AD0A237F48D0F97C51 /* Resources/too-spatula-combo-chubby-v2.png in Resources */ = {isa = PBXBuildFile; fileRef = DECD788E8DCAC1A994F6A9C1 /* Resources/too-spatula-combo-chubby-v2.png */; };
+		F7D09BE16CFD197CD13133AF /* Resources/too-spatula-combo-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = 6BBB09391B01E5EBAEF3AF05 /* Resources/too-spatula-combo-spritesheet.png */; };
+		8F833B1B1E44D9DA6B4EA340 /* Resources/too-spatula-idle-muted-v2.png in Resources */ = {isa = PBXBuildFile; fileRef = 0A314AEF14B13A739DC57798 /* Resources/too-spatula-idle-muted-v2.png */; };
+		3E935308925108F9A1E7FC1D /* Resources/too-spatula-idle-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = 2EA7D0420CC8E65783DB23D0 /* Resources/too-spatula-idle-spritesheet.png */; };
+		AAF05984CD3475FB1E816671 /* Resources/too-spatula-jump-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = EEDFA87F27FFFB7D08E93FD0 /* Resources/too-spatula-jump-spritesheet.png */; };
+		2530A60D85F04865958A395E /* Resources/too-spatula-walk-muted-v2.png in Resources */ = {isa = PBXBuildFile; fileRef = DE3DD4141AD1F5F85BBBF1EB /* Resources/too-spatula-walk-muted-v2.png */; };
+		B1E1CA375C4DD3AB96191AF2 /* Resources/too-spatula-walk-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = B08AD8FED69FE57F236A0830 /* Resources/too-spatula-walk-spritesheet.png */; };
+		CBFEBA48AB02A6333569BAF0 /* Resources/too-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = EAE28BEAEFA4B3AD9E0DD7DF /* Resources/too-spritesheet.png */; };
+		87F4E7319940B8901F120C2C /* Resources/too-walk-spritesheet.png in Resources */ = {isa = PBXBuildFile; fileRef = AA7EE9D882FC43F0A8595B60 /* Resources/too-walk-spritesheet.png */; };
+		B45B7D4BE5B136D274AE3512 = {isa = PBXBuildFile; fileRef = 902C4A5E86C614F8571C352C; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		A10000000000000000000001 /* MyFitbites.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyFitbites.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9AB2D6D7A2B5F2BB6CD40C08 /* AdventureSceneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AdventureSceneView.swift"; sourceTree = "<group>"; };
+		F9A251F8756766949A3CF637 /* ArcadeTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ArcadeTiming.swift"; sourceTree = "<group>"; };
+		2722E7FB4FD75CF293EBC944 /* ArenaEncounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ArenaEncounter.swift"; sourceTree = "<group>"; };
+		A4343F7018B0A982D1328FB5 /* CombatRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CombatRules.swift"; sourceTree = "<group>"; };
+		83B801043BB0E082DAC7C51E /* KitchenCombat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KitchenCombat.swift"; sourceTree = "<group>"; };
+		C1F9C6A124B97539D37A45B5 /* NavigationProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NavigationProbe.swift"; sourceTree = "<group>"; };
+		2ADEA7BAE92B022104059835 /* SpriteAssets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpriteAssets.swift"; sourceTree = "<group>"; };
+		413D05E4C710A84283E971B9 /* StreetScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StreetScene.swift"; sourceTree = "<group>"; };
+		2F34F660208748F1E8AB0E94 /* TielSoundEffects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TielSoundEffects.swift"; sourceTree = "<group>"; };
+		49985D48725D7245B7EB29D3 /* TielSoundEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TielSoundEvents.swift"; sourceTree = "<group>"; };
+		3F0AEDC90C6250F6DFE1B25E /* TielSoundPerformance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TielSoundPerformance.swift"; sourceTree = "<group>"; };
+		A7A7589E9C0EBD0A0C8BB77F /* TooAdventureApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TooAdventureApp.swift"; sourceTree = "<group>"; };
+		6465A04E08E4385328BEE5FA /* TooKeyboardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TooKeyboardState.swift"; sourceTree = "<group>"; };
+		FEDE2B698C57A51956C5F6AC /* TooKeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TooKeyboardView.swift"; sourceTree = "<group>"; };
+		5B61E7C60A8854C801862121 /* TooLegCombo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TooLegCombo.swift"; sourceTree = "<group>"; };
+		A5640A6A58532BB48CCC3E53 /* TooNado.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TooNado.swift"; sourceTree = "<group>"; };
+		050FC6E54F6191CE7D06524F /* Resources/dev-cup-01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/dev-cup-01.png"; sourceTree = "<group>"; };
+		1DA074289E78DC24AA8DA2EC /* Resources/dev-presso-hit-01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/dev-presso-hit-01.png"; sourceTree = "<group>"; };
+		637F1BDD8712EA7E368B3845 /* Resources/dev-presso-hit-02.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/dev-presso-hit-02.png"; sourceTree = "<group>"; };
+		2FF17081EB77816E21A2A51F /* Resources/dev-presso-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/dev-presso-spritesheet.png"; sourceTree = "<group>"; };
+		D3D22644D0C5AE7B0E1BE18B /* Resources/goblin-hit-kick-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/goblin-hit-kick-spritesheet.png"; sourceTree = "<group>"; };
+		AB9DA081CF75B5826EA07662 /* Resources/goblin-wobble-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/goblin-wobble-spritesheet.png"; sourceTree = "<group>"; };
+		E3BEE6FEF09B3FDDAB59BEC8 /* Resources/neighborhood-panorama.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/neighborhood-panorama.png"; sourceTree = "<group>"; };
+		5DC060D0532A9D82B8EBC45C /* Resources/protein-sandwich-01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/protein-sandwich-01.png"; sourceTree = "<group>"; };
+		1107171A0659B0FE6A75CE9B /* Resources/protein-toaster-hit-01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/protein-toaster-hit-01.png"; sourceTree = "<group>"; };
+		6E5D31405354DBAC5D0E43C7 /* Resources/protein-toaster-hit-02.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/protein-toaster-hit-02.png"; sourceTree = "<group>"; };
+		DC3CECFB16DA7F514F6149DD /* Resources/protein-toaster-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/protein-toaster-spritesheet.png"; sourceTree = "<group>"; };
+		4CA78FBA46E851AF03181334 /* Resources/spatula-pickup-trimmed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/spatula-pickup-trimmed.png"; sourceTree = "<group>"; };
+		A645E451D831A991A01158F7 /* Resources/sprite-bounds.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "Resources/sprite-bounds.json"; sourceTree = "<group>"; };
+		38107B883D2EAAFD77807276 /* Resources/tiel-checkpoint.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-checkpoint.wav"; sourceTree = "<group>"; };
+		9A0CA8DBA941BCC93B3DD03D /* Resources/tiel-chubby-jump-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/tiel-chubby-jump-spritesheet.png"; sourceTree = "<group>"; };
+		916E47FD434559A16C2BF4C5 /* Resources/tiel-coin.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-coin.wav"; sourceTree = "<group>"; };
+		D40D6EC89AF393C6AE5C8DC1 /* Resources/tiel-cookie.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-cookie.wav"; sourceTree = "<group>"; };
+		1AD77786335C2F775E4AFB42 /* Resources/tiel-crate.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-crate.wav"; sourceTree = "<group>"; };
+		6C93D0AFFAC005E195B550C5 /* Resources/tiel-dialogue.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-dialogue.wav"; sourceTree = "<group>"; };
+		3778DB78077E5B2731039132 /* Resources/tiel-jump.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-jump.wav"; sourceTree = "<group>"; };
+		70DAE683009EC3249F760F47 /* Resources/tiel-projectile.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-projectile.wav"; sourceTree = "<group>"; };
+		1B940842A790DFD8D87A2B9F /* Resources/tiel-rewardCash.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-rewardCash.wav"; sourceTree = "<group>"; };
+		288367585743C5E17BCE193F /* Resources/tiel-rewardRico.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-rewardRico.wav"; sourceTree = "<group>"; };
+		044618822CC1DA91D8DF75CA /* Resources/tiel-rewardStamp.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-rewardStamp.wav"; sourceTree = "<group>"; };
+		4B029706928D3BAE45D5730E /* Resources/tiel-select.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-select.wav"; sourceTree = "<group>"; };
+		14C6B22642D368F27DD566CC /* Resources/tiel-splash.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-splash.wav"; sourceTree = "<group>"; };
+		5AB870F500FE96B49AE7D912 /* Resources/tiel-stomp.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-stomp.wav"; sourceTree = "<group>"; };
+		5C0D130028446804E8FE7B75 /* Resources/tiel-thunder.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Resources/tiel-thunder.wav"; sourceTree = "<group>"; };
+		6D2C17487C9D82151CBF7D9E /* Resources/too-hit-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-hit-spritesheet.png"; sourceTree = "<group>"; };
+		EA844B7E25ABC8AD569B409E /* Resources/too-jump-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-jump-spritesheet.png"; sourceTree = "<group>"; };
+		5EE356867DF4BC01A115B543 /* Resources/too-knockdown-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-knockdown-spritesheet.png"; sourceTree = "<group>"; };
+		22252284C8E0EDBAB8074FB2 /* Resources/too-leg-combo-01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-leg-combo-01.png"; sourceTree = "<group>"; };
+		4D5C141DA3AA7B6AE14EFA01 /* Resources/too-leg-combo-02.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-leg-combo-02.png"; sourceTree = "<group>"; };
+		5D8900FC15742BE6A889563F /* Resources/too-leg-combo-03.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-leg-combo-03.png"; sourceTree = "<group>"; };
+		03EEBC87395A4F2C120123DF /* Resources/too-leg-combo-04.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-leg-combo-04.png"; sourceTree = "<group>"; };
+		80B6582CA51207BF7DF7B843 /* Resources/too-leg-combo-05.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-leg-combo-05.png"; sourceTree = "<group>"; };
+		A4E990A3D03F69AF58B7C78C /* Resources/too-leg-combo-06.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-leg-combo-06.png"; sourceTree = "<group>"; };
+		7EB5D019962272E5A57753C0 /* Resources/too-leg-combo-07.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-leg-combo-07.png"; sourceTree = "<group>"; };
+		9086057F1C586BBEF083A311 /* Resources/too-leg-combo-08.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-leg-combo-08.png"; sourceTree = "<group>"; };
+		D1F5795E1459AE61C78D457C /* Resources/too-leg-combo-09.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-leg-combo-09.png"; sourceTree = "<group>"; };
+		E40BDFC6399C4372BC360AAE /* Resources/too-nado-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-nado-spritesheet.png"; sourceTree = "<group>"; };
+		DD8EF2A385A1DB97B3513895 /* Resources/too-nado-wind.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-nado-wind.png"; sourceTree = "<group>"; };
+		D82ACCFCC0725036988B6A6C /* Resources/too-punch-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-punch-spritesheet.png"; sourceTree = "<group>"; };
+		DECD788E8DCAC1A994F6A9C1 /* Resources/too-spatula-combo-chubby-v2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-spatula-combo-chubby-v2.png"; sourceTree = "<group>"; };
+		6BBB09391B01E5EBAEF3AF05 /* Resources/too-spatula-combo-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-spatula-combo-spritesheet.png"; sourceTree = "<group>"; };
+		0A314AEF14B13A739DC57798 /* Resources/too-spatula-idle-muted-v2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-spatula-idle-muted-v2.png"; sourceTree = "<group>"; };
+		2EA7D0420CC8E65783DB23D0 /* Resources/too-spatula-idle-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-spatula-idle-spritesheet.png"; sourceTree = "<group>"; };
+		EEDFA87F27FFFB7D08E93FD0 /* Resources/too-spatula-jump-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-spatula-jump-spritesheet.png"; sourceTree = "<group>"; };
+		DE3DD4141AD1F5F85BBBF1EB /* Resources/too-spatula-walk-muted-v2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-spatula-walk-muted-v2.png"; sourceTree = "<group>"; };
+		B08AD8FED69FE57F236A0830 /* Resources/too-spatula-walk-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-spatula-walk-spritesheet.png"; sourceTree = "<group>"; };
+		EAE28BEAEFA4B3AD9E0DD7DF /* Resources/too-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-spritesheet.png"; sourceTree = "<group>"; };
+		AA7EE9D882FC43F0A8595B60 /* Resources/too-walk-spritesheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Resources/too-walk-spritesheet.png"; sourceTree = "<group>"; };
+		902C4A5E86C614F8571C352C /* MyFitbitesWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; path = MyFitbitesWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A10000000000000000000002 /* MyFitbites */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (473867F320AE59BAECCA246D, );
 			path = MyFitbites;
 			sourceTree = "<group>";
 		};
+		94907BD871FBF7BF5A091D92 = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (B73AC99FBDCBEFB5089B9C76, ); path = MyFitbitesWidgets; sourceTree = "<group>"; };
+		4266DF0D076F4CF782D68B0B = {isa = PBXFileSystemSynchronizedRootGroup; path = WidgetShared; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -26,13 +170,93 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D494B7D98D8E4611B3BCF5CE = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		195A53EB70E818E35BFCDD74 /* ArcadeDemoShared */ = {
+			isa = PBXGroup;
+			children = (
+				9AB2D6D7A2B5F2BB6CD40C08 /* AdventureSceneView.swift */,
+				F9A251F8756766949A3CF637 /* ArcadeTiming.swift */,
+				2722E7FB4FD75CF293EBC944 /* ArenaEncounter.swift */,
+				A4343F7018B0A982D1328FB5 /* CombatRules.swift */,
+				83B801043BB0E082DAC7C51E /* KitchenCombat.swift */,
+				C1F9C6A124B97539D37A45B5 /* NavigationProbe.swift */,
+				2ADEA7BAE92B022104059835 /* SpriteAssets.swift */,
+				413D05E4C710A84283E971B9 /* StreetScene.swift */,
+				2F34F660208748F1E8AB0E94 /* TielSoundEffects.swift */,
+				49985D48725D7245B7EB29D3 /* TielSoundEvents.swift */,
+				3F0AEDC90C6250F6DFE1B25E /* TielSoundPerformance.swift */,
+				A7A7589E9C0EBD0A0C8BB77F /* TooAdventureApp.swift */,
+				6465A04E08E4385328BEE5FA /* TooKeyboardState.swift */,
+				FEDE2B698C57A51956C5F6AC /* TooKeyboardView.swift */,
+				5B61E7C60A8854C801862121 /* TooLegCombo.swift */,
+				A5640A6A58532BB48CCC3E53 /* TooNado.swift */,
+				050FC6E54F6191CE7D06524F /* Resources/dev-cup-01.png */,
+				1DA074289E78DC24AA8DA2EC /* Resources/dev-presso-hit-01.png */,
+				637F1BDD8712EA7E368B3845 /* Resources/dev-presso-hit-02.png */,
+				2FF17081EB77816E21A2A51F /* Resources/dev-presso-spritesheet.png */,
+				D3D22644D0C5AE7B0E1BE18B /* Resources/goblin-hit-kick-spritesheet.png */,
+				AB9DA081CF75B5826EA07662 /* Resources/goblin-wobble-spritesheet.png */,
+				E3BEE6FEF09B3FDDAB59BEC8 /* Resources/neighborhood-panorama.png */,
+				5DC060D0532A9D82B8EBC45C /* Resources/protein-sandwich-01.png */,
+				1107171A0659B0FE6A75CE9B /* Resources/protein-toaster-hit-01.png */,
+				6E5D31405354DBAC5D0E43C7 /* Resources/protein-toaster-hit-02.png */,
+				DC3CECFB16DA7F514F6149DD /* Resources/protein-toaster-spritesheet.png */,
+				4CA78FBA46E851AF03181334 /* Resources/spatula-pickup-trimmed.png */,
+				A645E451D831A991A01158F7 /* Resources/sprite-bounds.json */,
+				38107B883D2EAAFD77807276 /* Resources/tiel-checkpoint.wav */,
+				9A0CA8DBA941BCC93B3DD03D /* Resources/tiel-chubby-jump-spritesheet.png */,
+				916E47FD434559A16C2BF4C5 /* Resources/tiel-coin.wav */,
+				D40D6EC89AF393C6AE5C8DC1 /* Resources/tiel-cookie.wav */,
+				1AD77786335C2F775E4AFB42 /* Resources/tiel-crate.wav */,
+				6C93D0AFFAC005E195B550C5 /* Resources/tiel-dialogue.wav */,
+				3778DB78077E5B2731039132 /* Resources/tiel-jump.wav */,
+				70DAE683009EC3249F760F47 /* Resources/tiel-projectile.wav */,
+				1B940842A790DFD8D87A2B9F /* Resources/tiel-rewardCash.wav */,
+				288367585743C5E17BCE193F /* Resources/tiel-rewardRico.wav */,
+				044618822CC1DA91D8DF75CA /* Resources/tiel-rewardStamp.wav */,
+				4B029706928D3BAE45D5730E /* Resources/tiel-select.wav */,
+				14C6B22642D368F27DD566CC /* Resources/tiel-splash.wav */,
+				5AB870F500FE96B49AE7D912 /* Resources/tiel-stomp.wav */,
+				5C0D130028446804E8FE7B75 /* Resources/tiel-thunder.wav */,
+				6D2C17487C9D82151CBF7D9E /* Resources/too-hit-spritesheet.png */,
+				EA844B7E25ABC8AD569B409E /* Resources/too-jump-spritesheet.png */,
+				5EE356867DF4BC01A115B543 /* Resources/too-knockdown-spritesheet.png */,
+				22252284C8E0EDBAB8074FB2 /* Resources/too-leg-combo-01.png */,
+				4D5C141DA3AA7B6AE14EFA01 /* Resources/too-leg-combo-02.png */,
+				5D8900FC15742BE6A889563F /* Resources/too-leg-combo-03.png */,
+				03EEBC87395A4F2C120123DF /* Resources/too-leg-combo-04.png */,
+				80B6582CA51207BF7DF7B843 /* Resources/too-leg-combo-05.png */,
+				A4E990A3D03F69AF58B7C78C /* Resources/too-leg-combo-06.png */,
+				7EB5D019962272E5A57753C0 /* Resources/too-leg-combo-07.png */,
+				9086057F1C586BBEF083A311 /* Resources/too-leg-combo-08.png */,
+				D1F5795E1459AE61C78D457C /* Resources/too-leg-combo-09.png */,
+				E40BDFC6399C4372BC360AAE /* Resources/too-nado-spritesheet.png */,
+				DD8EF2A385A1DB97B3513895 /* Resources/too-nado-wind.png */,
+				D82ACCFCC0725036988B6A6C /* Resources/too-punch-spritesheet.png */,
+				DECD788E8DCAC1A994F6A9C1 /* Resources/too-spatula-combo-chubby-v2.png */,
+				6BBB09391B01E5EBAEF3AF05 /* Resources/too-spatula-combo-spritesheet.png */,
+				0A314AEF14B13A739DC57798 /* Resources/too-spatula-idle-muted-v2.png */,
+				2EA7D0420CC8E65783DB23D0 /* Resources/too-spatula-idle-spritesheet.png */,
+				EEDFA87F27FFFB7D08E93FD0 /* Resources/too-spatula-jump-spritesheet.png */,
+				DE3DD4141AD1F5F85BBBF1EB /* Resources/too-spatula-walk-muted-v2.png */,
+				B08AD8FED69FE57F236A0830 /* Resources/too-spatula-walk-spritesheet.png */,
+				EAE28BEAEFA4B3AD9E0DD7DF /* Resources/too-spritesheet.png */,
+				AA7EE9D882FC43F0A8595B60 /* Resources/too-walk-spritesheet.png */,
+			);
+			name = ArcadeDemoShared;
+			path = ArcadeShared;
+			sourceTree = "<group>";
+		};
 		A10000000000000000000004 = {
 			isa = PBXGroup;
 			children = (
+				94907BD871FBF7BF5A091D92,
+				4266DF0D076F4CF782D68B0B,
 				A10000000000000000000002 /* MyFitbites */,
+				195A53EB70E818E35BFCDD74 /* ArcadeDemoShared */,
 				A10000000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000001 /* MyFitbites.app */,
+				902C4A5E86C614F8571C352C,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -52,6 +277,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = A10000000000000000000007 /* Build configuration list for PBXNativeTarget "MyFitbites" */;
 			buildPhases = (
+				856EC7632AC4AD3E940984A1,
 				A10000000000000000000008 /* Sources */,
 				A10000000000000000000003 /* Frameworks */,
 				A10000000000000000000009 /* Resources */,
@@ -59,8 +285,10 @@
 			buildRules = (
 			);
 			dependencies = (
+				023BEAE3A812C5DB70F362CF,
 			);
 			fileSystemSynchronizedGroups = (
+				4266DF0D076F4CF782D68B0B,
 				A10000000000000000000002 /* MyFitbites */,
 			);
 			name = MyFitbites;
@@ -70,7 +298,30 @@
 			productReference = A10000000000000000000001 /* MyFitbites.app */;
 			productType = "com.apple.product-type.application";
 		};
+		1C39AD4D5A44A40780B84D3E /* MyFitbitesWidgets */ = {
+isa = PBXNativeTarget; buildConfigurationList = 8670FA1EF8957B92B669C595;
+buildPhases = (BDEA898F54A0A30712FCCDD9, D494B7D98D8E4611B3BCF5CE, ADFAF2ACE6B2BC2BEA9B8C92, );
+buildRules = (); dependencies = (); fileSystemSynchronizedGroups = (94907BD871FBF7BF5A091D92, 4266DF0D076F4CF782D68B0B, );
+name = MyFitbitesWidgets; productName = MyFitbitesWidgets; productReference = 902C4A5E86C614F8571C352C; productType = "com.apple.product-type.app-extension";
+};
 /* End PBXNativeTarget section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B73AC99FBDCBEFB5089B9C76 = {isa = PBXFileSystemSynchronizedBuildFileExceptionSet; membershipExceptions = (Info.plist, MyFitbitesWidgets.entitlements, ); target = 1C39AD4D5A44A40780B84D3E; };
+		473867F320AE59BAECCA246D = {isa = PBXFileSystemSynchronizedBuildFileExceptionSet; membershipExceptions = (Info.plist, MyFitbites.entitlements, ); target = A10000000000000000000006; };
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXContainerItemProxy section */
+		0B0D7DBE8843EE9A6BA486CB = {isa = PBXContainerItemProxy; containerPortal = A1000000000000000000000A; proxyType = 1; remoteGlobalIDString = 1C39AD4D5A44A40780B84D3E; remoteInfo = MyFitbitesWidgets; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		023BEAE3A812C5DB70F362CF = {isa = PBXTargetDependency; target = 1C39AD4D5A44A40780B84D3E; targetProxy = 0B0D7DBE8843EE9A6BA486CB; };
+/* End PBXTargetDependency section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		856EC7632AC4AD3E940984A1 = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (B45B7D4BE5B136D274AE3512, ); name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXProject section */
 		A1000000000000000000000A /* Project object */ = {
@@ -90,6 +341,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				vi,
 				Base,
 			);
 			mainGroup = A10000000000000000000004;
@@ -99,6 +351,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				1C39AD4D5A44A40780B84D3E,
 				A10000000000000000000006 /* MyFitbites */,
 			);
 		};
@@ -109,9 +362,62 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				294885880BE793583DF5F0CE /* Resources/dev-cup-01.png in Resources */,
+				DA5CA80CC374E9CB7650E4BF /* Resources/dev-presso-hit-01.png in Resources */,
+				21A68E4C52113C30FFFB74E0 /* Resources/dev-presso-hit-02.png in Resources */,
+				235480ABECB207B55A8B9EC1 /* Resources/dev-presso-spritesheet.png in Resources */,
+				36D83D2B35F702E72C3E7DAC /* Resources/goblin-hit-kick-spritesheet.png in Resources */,
+				C3DFEC64760EF3EF8B327BC1 /* Resources/goblin-wobble-spritesheet.png in Resources */,
+				FF255BAEBEF86777206717F0 /* Resources/neighborhood-panorama.png in Resources */,
+				9A355FB36A65D7117E5EC0F9 /* Resources/protein-sandwich-01.png in Resources */,
+				5B72897A9B12BFCB8EB0BEB5 /* Resources/protein-toaster-hit-01.png in Resources */,
+				575AC895160DF19EA33CB4A0 /* Resources/protein-toaster-hit-02.png in Resources */,
+				FD94C056E93A6FCA5080ED8A /* Resources/protein-toaster-spritesheet.png in Resources */,
+				1EE7F4919617027B1AB260E3 /* Resources/spatula-pickup-trimmed.png in Resources */,
+				ED01B8CCC34446E485737EA6 /* Resources/sprite-bounds.json in Resources */,
+				0994F279E040A88294B80AFE /* Resources/tiel-checkpoint.wav in Resources */,
+				252226BE5A797BC3D2821CDE /* Resources/tiel-chubby-jump-spritesheet.png in Resources */,
+				01523B248FE9119ED7FA994D /* Resources/tiel-coin.wav in Resources */,
+				1FFA608DDB82BE9C4E92B255 /* Resources/tiel-cookie.wav in Resources */,
+				9B568BCA4FBB0B2D34F2B86A /* Resources/tiel-crate.wav in Resources */,
+				166F634EB17DBA4623684FE3 /* Resources/tiel-dialogue.wav in Resources */,
+				D432F5D8043CA707B678DCC2 /* Resources/tiel-jump.wav in Resources */,
+				B624D8BCB41BC5ADB5B2DA75 /* Resources/tiel-projectile.wav in Resources */,
+				CAB4768DB7D16C8A3F505CB9 /* Resources/tiel-rewardCash.wav in Resources */,
+				A9820268CD3BAEDF240A6EAB /* Resources/tiel-rewardRico.wav in Resources */,
+				6397178D3221EFABDA0B14E9 /* Resources/tiel-rewardStamp.wav in Resources */,
+				342329322E3013C5088FA515 /* Resources/tiel-select.wav in Resources */,
+				C521697AC71141CFE05108E7 /* Resources/tiel-splash.wav in Resources */,
+				B6BDEE140D14340270088BC1 /* Resources/tiel-stomp.wav in Resources */,
+				E51CA0600E13190E3EBE4D71 /* Resources/tiel-thunder.wav in Resources */,
+				89C57D86CB834BDF55E0C32E /* Resources/too-hit-spritesheet.png in Resources */,
+				5C1C2E8B5CF5F4B00368D192 /* Resources/too-jump-spritesheet.png in Resources */,
+				4BD4505BDB38C41796C34925 /* Resources/too-knockdown-spritesheet.png in Resources */,
+				44F80852B6DC3371F3954F9D /* Resources/too-leg-combo-01.png in Resources */,
+				9E78461472B56DA747F2C9C7 /* Resources/too-leg-combo-02.png in Resources */,
+				F6DA95A56D9E1007FA627ECF /* Resources/too-leg-combo-03.png in Resources */,
+				98395BB4AFCA70EC9461212C /* Resources/too-leg-combo-04.png in Resources */,
+				785AEC7BA539CB49E1A2EEEF /* Resources/too-leg-combo-05.png in Resources */,
+				C27D3225A6926C378DC47684 /* Resources/too-leg-combo-06.png in Resources */,
+				8054BB0F5F80D9260EB0545A /* Resources/too-leg-combo-07.png in Resources */,
+				FA087FC0AFA01675CC432759 /* Resources/too-leg-combo-08.png in Resources */,
+				EB8637B166E2F1748CAC63F7 /* Resources/too-leg-combo-09.png in Resources */,
+				4E3527478E5989451E3798B6 /* Resources/too-nado-spritesheet.png in Resources */,
+				0F6666127472D98B7939DDB1 /* Resources/too-nado-wind.png in Resources */,
+				4458FA5010F596BA90705174 /* Resources/too-punch-spritesheet.png in Resources */,
+				56DCA6AD0A237F48D0F97C51 /* Resources/too-spatula-combo-chubby-v2.png in Resources */,
+				F7D09BE16CFD197CD13133AF /* Resources/too-spatula-combo-spritesheet.png in Resources */,
+				8F833B1B1E44D9DA6B4EA340 /* Resources/too-spatula-idle-muted-v2.png in Resources */,
+				3E935308925108F9A1E7FC1D /* Resources/too-spatula-idle-spritesheet.png in Resources */,
+				AAF05984CD3475FB1E816671 /* Resources/too-spatula-jump-spritesheet.png in Resources */,
+				2530A60D85F04865958A395E /* Resources/too-spatula-walk-muted-v2.png in Resources */,
+				B1E1CA375C4DD3AB96191AF2 /* Resources/too-spatula-walk-spritesheet.png in Resources */,
+				CBFEBA48AB02A6333569BAF0 /* Resources/too-spritesheet.png in Resources */,
+				87F4E7319940B8901F120C2C /* Resources/too-walk-spritesheet.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		ADFAF2ACE6B2BC2BEA9B8C92 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -119,9 +425,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				03FE1933F7355533D4C7191A /* AdventureSceneView.swift in Sources */,
+				D85C3227E10ED75D44B19CA9 /* ArcadeTiming.swift in Sources */,
+				AF4DFBC74865B1D6622A7D9A /* ArenaEncounter.swift in Sources */,
+				7AEF7020A88BE2365EF21C1D /* CombatRules.swift in Sources */,
+				09ABCB04577BB9298D117223 /* KitchenCombat.swift in Sources */,
+				3037B186AC5E29EF803B4D17 /* NavigationProbe.swift in Sources */,
+				9B8C3F20AD0FE0686431B8B5 /* SpriteAssets.swift in Sources */,
+				8E882BEB26BEA842964DA62D /* StreetScene.swift in Sources */,
+				53EA6F7C54B03125F30F9428 /* TielSoundEffects.swift in Sources */,
+				8087067F8F19F89AC2852620 /* TielSoundEvents.swift in Sources */,
+				F4CAEF9044902E29A5373078 /* TielSoundPerformance.swift in Sources */,
+				AD0037CA467FBF896EF23AF9 /* TooAdventureApp.swift in Sources */,
+				E77317B0C2D71D87EC16658D /* TooKeyboardState.swift in Sources */,
+				1D2CA86FC3ACF69CDBEF9C7F /* TooKeyboardView.swift in Sources */,
+				49FECD0F5542861ECF2B0DD5 /* TooLegCombo.swift in Sources */,
+				E7B2315AD021E327E6F687AE /* TooNado.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BDEA898F54A0A30712FCCDD9 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -242,18 +565,21 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MyFitbites/MyFitbites.entitlements;
+				INFOPLIST_FILE = MyFitbites/Info.plist;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = CN4547Z998;
+				DEVELOPMENT_TEAM = 9V3UZFAA66;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = MyFitbites;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Fitbites uses your location only when you ask to confirm a delivery address.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -271,18 +597,21 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MyFitbites/MyFitbites.entitlements;
+				INFOPLIST_FILE = MyFitbites/Info.plist;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = CN4547Z998;
+				DEVELOPMENT_TEAM = 9V3UZFAA66;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = MyFitbites;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Fitbites uses your location only when you ask to confirm a delivery address.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -296,6 +625,24 @@
 			};
 			name = Release;
 		};
+		A8490EEBFA8C9588EF9DCA7B = {isa = XCBuildConfiguration; buildSettings = {
+APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = 9V3UZFAA66;
+CODE_SIGN_ENTITLEMENTS = MyFitbitesWidgets/MyFitbitesWidgets.entitlements;
+CURRENT_PROJECT_VERSION = 1; MARKETING_VERSION = 0.1; GENERATE_INFOPLIST_FILE = YES;
+INFOPLIST_FILE = MyFitbitesWidgets/Info.plist; INFOPLIST_KEY_CFBundleDisplayName = "MyFitbites";
+IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+PRODUCT_BUNDLE_IDENTIFIER = vn.com.fitbites.MyFitbites.Widgets; PRODUCT_NAME = "$(TARGET_NAME)";
+SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; ENABLE_PREVIEWS = YES;
+}; name = Debug; };
+		D7F9E05D56CF96A90D987684 = {isa = XCBuildConfiguration; buildSettings = {
+APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = 9V3UZFAA66;
+CODE_SIGN_ENTITLEMENTS = MyFitbitesWidgets/MyFitbitesWidgets.entitlements;
+CURRENT_PROJECT_VERSION = 1; MARKETING_VERSION = 0.1; GENERATE_INFOPLIST_FILE = YES;
+INFOPLIST_FILE = MyFitbitesWidgets/Info.plist; INFOPLIST_KEY_CFBundleDisplayName = "MyFitbites";
+IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+PRODUCT_BUNDLE_IDENTIFIER = vn.com.fitbites.MyFitbites.Widgets; PRODUCT_NAME = "$(TARGET_NAME)";
+SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; ENABLE_PREVIEWS = YES;
+}; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -317,6 +664,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		8670FA1EF8957B92B669C595 = {isa = XCConfigurationList; buildConfigurations = (A8490EEBFA8C9588EF9DCA7B, D7F9E05D56CF96A90D987684, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = A1000000000000000000000A /* Project object */;

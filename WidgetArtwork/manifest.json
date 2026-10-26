@@ -1,0 +1,74 @@
+[
+  {
+    "file": "characters/too/too_cookie_jar.png",
+    "width": 1202,
+    "height": 1308,
+    "transparent": true
+  },
+  {
+    "file": "characters/too/too_welcome.png",
+    "width": 1122,
+    "height": 1402,
+    "transparent": true
+  },
+  {
+    "file": "characters/too/too_reward_celebration.png",
+    "width": 1202,
+    "height": 1309,
+    "transparent": true
+  },
+  {
+    "file": "characters/too/too_lab_discovery.png",
+    "width": 1202,
+    "height": 1309,
+    "transparent": true
+  },
+  {
+    "file": "characters/tiel/tiel_streak_approving.png",
+    "width": 1145,
+    "height": 1374,
+    "transparent": true
+  },
+  {
+    "file": "characters/tiel/tiel_streak_wings_crossed.png",
+    "width": 1145,
+    "height": 1374,
+    "transparent": true
+  },
+  {
+    "file": "characters/tiel/tiel_streak_tiny_dinosaur.png",
+    "width": 1145,
+    "height": 1374,
+    "transparent": true
+  },
+  {
+    "file": "characters/tiel/tiel_welcome_back.png",
+    "width": 1145,
+    "height": 1374,
+    "transparent": true
+  },
+  {
+    "file": "characters/tiel/tiel_guarding_cookies.png",
+    "width": 1145,
+    "height": 1374,
+    "transparent": true
+  },
+  {
+    "file": "backgrounds/widget_cafe_cream.png",
+    "width": 1817,
+    "height": 866,
+    "transparent": false
+  },
+  {
+    "file": "backgrounds/widget_espresso_dark.png",
+    "width": 1817,
+    "height": 866,
+    "transparent": false
+  },
+  {
+    "file": "backgrounds/widget_lab.png",
+    "width": 1817,
+    "height": 866,
+    "transparent": false
+  }
+]

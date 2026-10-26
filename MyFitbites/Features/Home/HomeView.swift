@@ -3,6 +3,8 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.scenePhase) private var scenePhase
+    @State private var isMemberPanelExpanded = false
+    @ScaledMetric(relativeTo: .body) private var headerAvatarSize = 52.8
     @State private var heroScene: DashboardHeroScene = DashboardHeroResolver().resolve()
     #if DEBUG
     @State private var debugHeroSceneOverride: DashboardHeroScene?
@@ -17,6 +19,14 @@ struct HomeView: View {
     #endif
     private let heroResolver = DashboardHeroResolver()
     private let rightNowResolver = RightNowCardResolver()
+    // Temporary campaign switch. Set to false to restore the original RIGHT NOW card.
+    private let usesProductWidget = true
+
+    private var isHomeAnimationActive: Bool {
+        appState.hasFinishedLaunchEntrance && appState.isMainAppVisible
+            && scenePhase == .active && appState.selectedTab == .home
+            && appState.homePath.isEmpty && !isMemberPanelExpanded
+    }
 
     private var dashboard: CustomerDashboard {
         appState.dashboardRepository.dashboard()
@@ -80,31 +90,61 @@ struct HomeView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: FBSpacing.lg) {
-                    heroHeader(screenWidth: proxy.size.width)
+            ZStack(alignment: .topTrailing) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: FBSpacing.lg) {
+                        heroHeader(screenWidth: proxy.size.width)
 
-                    content
+                        content
+                    }
+                    .padding(.bottom, 24)
+                    .accessibilityHidden(isMemberPanelExpanded)
+                    .overlay(alignment: .topTrailing) {
+                        ZStack(alignment: .topTrailing) {
+                            if isMemberPanelExpanded {
+                                Color.black.opacity(0.001)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { isMemberPanelExpanded = false }
+                                    .accessibilityHidden(true)
+                            }
+
+                            HomeMemberIsland(
+                                dashboard: dashboard,
+                                avatar: appState.customerProfile.avatar,
+                                isExpanded: $isMemberPanelExpanded,
+                                expandedWidth: proxy.size.width - (2 * FBSpacing.md)
+                            )
+                            .padding(.horizontal, FBSpacing.md)
+                            .padding(.top, 62)
+                        }
+                    }
                 }
-                .padding(.bottom, 24)
-            }
-            .background(Color.white.ignoresSafeArea())
-            .ignoresSafeArea(edges: .top)
-            .navigationBarTitleDisplayMode(.inline)
-            .task {
-                rollStreakSurpriseIfNeeded()
-                await refreshHeroScene()
-            }
-            .onChange(of: scenePhase) { _, phase in
-                guard phase == .active else { return }
-                rollStreakSurpriseIfNeeded()
-                Task {
-                    await appState.refreshDashboardAndRewards()
+                .refreshable {
+                    await appState.refreshCustomerData()
+                }
+                .background(Color.white.ignoresSafeArea())
+                .ignoresSafeArea(edges: .top)
+                .navigationBarTitleDisplayMode(.inline)
+                .task(id: appState.hasFinishedLaunchEntrance) {
+                    guard appState.hasFinishedLaunchEntrance else { return }
+                    rollStreakSurpriseIfNeeded()
                     await refreshHeroScene()
                 }
+                .onChange(of: scenePhase) { _, phase in
+                    guard phase == .active, appState.hasFinishedLaunchEntrance else { return }
+                    rollStreakSurpriseIfNeeded()
+                    Task {
+                        await appState.refreshCustomerData()
+                        await refreshHeroScene()
+                    }
+                }
+                .onChange(of: appState.dashboardHeroWeatherCondition) { _, _ in
+                    updateHeroScene()
+                }
             }
-            .onChange(of: appState.dashboardHeroWeatherCondition) { _, _ in
-                updateHeroScene()
+            .onDisappear { isMemberPanelExpanded = false }
+            .onChange(of: scenePhase) { _, phase in
+                if phase != .active { isMemberPanelExpanded = false }
             }
         }
     }
@@ -112,21 +152,18 @@ struct HomeView: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: FBSpacing.lg) {
             VStack(alignment: .leading, spacing: FBSpacing.lg) {
-                FBXPProgress(
-                    level: dashboard.level,
-                    xp: dashboard.xp,
-                    xpToNext: dashboard.xpToNext,
-                    targetXP: dashboard.levelTarget,
-                    headline: dashboard.name,
-                    avatar: appState.customerProfile.avatar
-                )
-                .offset(y: -48)
-                .padding(.bottom, -48)
-                .zIndex(1)
-
-                rightNowSection
-
                 HomeLoyaltyStampCard(completed: rewards.loyaltyStamps, total: rewards.loyaltyTarget)
+                    .offset(y: -48)
+                    .padding(.bottom, -48)
+                    .zIndex(1)
+
+                if !usesProductWidget {
+                    rightNowSection
+                }
+
+                if usesProductWidget {
+                    homeProductWidget
+                }
 
                 HomeAchievementsCard(achievement: nextAchievement)
 
@@ -148,6 +185,26 @@ struct HomeView: View {
         }
     }
 
+    private var homeProductWidget: some View {
+        let promotion = catalog.homePromotion
+        let product = catalog.products.first { $0.id == promotion?.productID }
+            ?? catalog.products.first { $0.id == catalog.featuredProductID }
+            ?? catalog.products.first
+        return HomeProductWidget(
+            title: promotion?.title ?? product?.name ?? "Fresh from Fitbites",
+            subtitle: promotion?.subtitle ?? "Your next favourite is waiting.",
+            cta: promotion?.cta ?? "Shop now",
+            imageURL: promotion?.imageURL ?? product?.imageURL,
+            imageName: product?.imageName ?? "",
+            imagePosition: promotion?.imagePosition ?? "center"
+        ) {
+            // An unset or removed destination opens the store instead of an unrelated product.
+            appState.pendingStoreProductID = promotion == nil ? product?.id :
+                catalog.products.first { $0.id == promotion?.productID }?.id
+            appState.selectedTab = .order
+        }
+    }
+
     private func heroHeader(screenWidth: CGFloat) -> some View {
         heroIntro(screenWidth: screenWidth)
         .frame(width: screenWidth, height: 628)
@@ -157,20 +214,15 @@ struct HomeView: View {
 
     private func heroIntro(screenWidth: CGFloat) -> some View {
         ZStack(alignment: .topLeading) {
-            Image(heroScene.assetName)
-                .resizable()
-                .scaledToFill()
-                .frame(width: screenWidth, height: 628)
-                .clipped()
-                .accessibilityLabel("Too and Tiel in the Fitbites kitchen")
-                .id(heroScene.assetName)
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.36), value: heroScene)
-                #if DEBUG
-                .onLongPressGesture {
-                    cycleDebugHeroScene()
-                }
-                #endif
+            HomeHeroArtwork(
+                preferredScene: heroScene,
+                screenWidth: screenWidth
+            )
+            #if DEBUG
+            .simultaneousGesture(
+                LongPressGesture().onEnded { _ in cycleDebugHeroScene() }
+            )
+            #endif
 
             LinearGradient(
                 colors: [
@@ -183,10 +235,11 @@ struct HomeView: View {
                 endPoint: .center
             )
             .frame(height: 260)
+            .allowsHitTesting(false)
 
             VStack(alignment: .leading, spacing: 8) {
                 topChrome
-                HeroMicrocopySlider(dashboard: dashboard)
+                HeroMicrocopySlider(dashboard: dashboard, isActive: isHomeAnimationActive)
             }
             .padding(.horizontal, FBSpacing.md)
             .padding(.top, 62)
@@ -375,7 +428,7 @@ struct HomeView: View {
     #endif
 
     private var topChrome: some View {
-        HStack(alignment: .top) {
+        HStack(alignment: .center, spacing: 12) {
             Image("FitbitesLogo")
                 .resizable()
                 .scaledToFit()
@@ -385,22 +438,8 @@ struct HomeView: View {
 
             Spacer()
 
-            settingsLink
+            Color.clear.frame(width: headerAvatarSize, height: headerAvatarSize)
         }
-    }
-
-    private var settingsLink: some View {
-        NavigationLink {
-            ProfileView(showsBackButton: true)
-        } label: {
-            Image(systemName: "person.crop.circle")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(FBColors.charcoal)
-                .frame(width: 42, height: 42)
-                .background(FBColors.surface.opacity(0.92), in: Circle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Account settings")
     }
 
     private var usual: some View {
@@ -823,8 +862,12 @@ struct CharacterBubble: View {
 
 private struct HeroMicrocopySlider: View {
     let dashboard: CustomerDashboard
+    let isActive: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     @State private var activeIndex = 0
-    private let timer = Timer.publish(every: 2.6, on: .main, in: .common).autoconnect()
+
+    private var shouldAdvance: Bool { isActive && !reduceMotion && !voiceOverEnabled }
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -861,9 +904,15 @@ private struct HeroMicrocopySlider: View {
         .shadow(color: FBColors.ivory.opacity(0.78), radius: 7, y: 1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(messages[activeIndex])
-        .onReceive(timer) { _ in
-            withAnimation(.easeInOut(duration: 0.46)) {
-                activeIndex = (activeIndex + 1) % messages.count
+        .task(id: shouldAdvance) {
+            guard shouldAdvance else { return }
+            while !Task.isCancelled {
+                do { try await Task.sleep(for: .seconds(2.6)) }
+                catch { return }
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeInOut(duration: 0.46)) {
+                    activeIndex = (activeIndex + 1) % messages.count
+                }
             }
         }
     }
@@ -959,34 +1008,14 @@ private struct HomeAchievementsCard: View {
         return "Your next achievement will appear here."
     }
 
-    private var progressText: String {
-        guard let achievement else { return "0/1" }
-
-        if let progress = achievement.progress, let target = achievement.target {
-            return "\(progress)/\(target)"
-        }
-
-        return achievement.status.uppercased()
-    }
-
     var body: some View {
         NavigationLink {
             AccountAchievementsView()
         } label: {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack {
+            HStack(alignment: .center, spacing: FBSpacing.md) {
+                VStack(alignment: .leading, spacing: 14) {
                     HomeCardEyebrow(icon: "trophy.fill", title: "ACHIEVEMENTS")
 
-                    Spacer()
-
-                    Text(progressText)
-                        .font(.fbCaption(.semibold))
-                        .foregroundStyle(FBColors.muted)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.78)
-                }
-
-                HStack(alignment: .center, spacing: FBSpacing.md) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(title)
                             .font(.custom("AvenirNext-Regular", size: 15))
@@ -1002,16 +1031,16 @@ private struct HomeAchievementsCard: View {
                             .lineLimit(2)
                             .minimumScaleFactor(0.86)
                     }
-
-                    Spacer(minLength: FBSpacing.sm)
-
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(FBColors.charcoal)
-                        .frame(width: 36, height: 36)
-                        .background(FBColors.surface.opacity(0.92), in: Circle())
-                        .overlay(Circle().stroke(FBColors.line.opacity(0.7)))
                 }
+
+                Spacer(minLength: FBSpacing.sm)
+
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(FBColors.charcoal)
+                    .frame(width: 36, height: 36)
+                    .background(FBColors.surface.opacity(0.92), in: Circle())
+                    .overlay(Circle().stroke(FBColors.line.opacity(0.7)))
             }
             .padding(FBSpacing.md)
             .background(FBColors.surface, in: RoundedRectangle(cornerRadius: FBCorner.card))
@@ -1185,5 +1214,277 @@ private struct ReorderCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Reorder previous order, \(title)")
+    }
+}
+
+
+private struct HomeProductWidget: View {
+    @EnvironmentObject private var appState: AppState
+    let title: String
+    let subtitle: String
+    let cta: String
+    let imageURL: URL?
+    let imageName: String
+    let imagePosition: String
+    let action: () -> Void
+    @ScaledMetric(relativeTo: .title) private var cardHeight = 360.0
+    @State private var remoteImage: UIImage?
+    @State private var loadedImageURL: URL?
+
+    private var imageAlignment: Alignment {
+        let position = imagePosition.lowercased()
+        if position.contains("top") { return .top }
+        if position.contains("bottom") { return .bottom }
+        if position.contains("left") { return .leading }
+        if position.contains("right") { return .trailing }
+        return .center
+    }
+
+    var body: some View {
+        Button(action: action) {
+            ZStack(alignment: .bottomLeading) {
+                GeometryReader { geometry in
+                    Group {
+                        if let imageURL,
+                           let image = (loadedImageURL == imageURL ? remoteImage : nil) ?? StoreImagePreloader.cachedImage(for: imageURL) {
+                            Image(uiImage: image).resizable()
+                        } else if imageURL == nil && !imageName.isEmpty {
+                            Image(imageName).resizable()
+                        } else {
+                            Rectangle().fill(FBColors.ivory)
+                        }
+                    }
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height, alignment: imageAlignment)
+                    .clipped()
+                }
+                .accessibilityHidden(true)
+
+                LinearGradient(
+                    stops: [.init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .clear, location: 0.28),
+                            .init(color: .black.opacity(0.80), location: 1)],
+                    startPoint: .top, endPoint: .bottom
+                )
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Spacer(minLength: 60)
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.custom("AvenirNext-Regular", size: 13))
+                            .tracking(1.05)
+                            .foregroundStyle(.white.opacity(0.88))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                    }
+                    HStack(alignment: .center, spacing: 16) {
+                        if !title.isEmpty {
+                            Text(title)
+                                .font(.custom("AvenirNext-DemiBold", size: 19))
+                                .tracking(1.05)
+                                .lineLimit(3)
+                                .minimumScaleFactor(0.75)
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        } else {
+                            Spacer(minLength: 0)
+                        }
+
+                        HStack(spacing: 10) {
+                            Text(cta)
+                                .font(.custom("AvenirNext-DemiBold", size: 12))
+                                .tracking(0.9)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(.subheadline, weight: .semibold))
+                        }
+                        .foregroundStyle(Color.black)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        .background(.white, in: Capsule())
+                        .layoutPriority(1)
+                    }
+                }
+                .padding(24)
+                .foregroundStyle(.white)
+            }
+            .frame(height: cardHeight)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(0.18), lineWidth: 1))
+            .shadow(color: .black.opacity(0.10), radius: 16, x: 0, y: 8)
+            .contentShape(RoundedRectangle(cornerRadius: 28))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel([title, subtitle, cta].filter { !$0.isEmpty }.joined(separator: ". "))
+        .accessibilityHint("Opens the Fitbites store")
+        .task(id: appState.hasFinishedLaunchEntrance ? imageURL : nil) {
+            guard appState.hasFinishedLaunchEntrance, let imageURL else { return }
+            let loaded = await StoreImagePreloader.image(for: imageURL)
+            guard !Task.isCancelled else { return }
+            loadedImageURL = imageURL
+            remoteImage = loaded
+        }
+    }
+}
+
+
+private struct HomeMemberIsland: View {
+    @EnvironmentObject private var appState: AppState
+    let dashboard: CustomerDashboard
+    let avatar: LocalAvatar
+    @Binding var isExpanded: Bool
+    let expandedWidth: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .body) private var avatarSize = 52.8
+
+    private var earnedXP: Int {
+        max(0, dashboard.levelTarget - dashboard.xpToNext)
+    }
+
+    private var progress: Double {
+        min(1, Double(earnedXP) / Double(max(1, dashboard.levelTarget)))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 12) {
+                if isExpanded {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(dashboard.name)
+                            .font(.custom("AvenirNext-DemiBold", size: 18, relativeTo: .headline))
+                            .tracking(0.5)
+                            .lineLimit(2)
+                        Text("LEVEL \(dashboard.level)")
+                            .font(.custom("AvenirNext-Regular", size: 10, relativeTo: .caption2))
+                            .tracking(1.5)
+                            .foregroundStyle(FBColors.muted)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .transition(.opacity)
+                }
+
+                Button {
+                    isExpanded.toggle()
+                } label: {
+                    FBAvatarView(avatar: avatar, size: avatarSize)
+                        .accessibilityHidden(true)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isExpanded ? "Close member panel" : "Show member profile and XP")
+                .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+            }
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 12) {
+                    Rectangle()
+                        .fill(FBColors.line.opacity(0.65))
+                        .frame(height: 1)
+                        .padding(.top, 16)
+
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("\(earnedXP.formatted()) / \(dashboard.levelTarget.formatted()) XP")
+                            .font(.custom("AvenirNext-DemiBold", size: 12, relativeTo: .caption))
+                            .monospacedDigit()
+                        Spacer(minLength: 8)
+                        Text("LEVEL \(dashboard.level + 1)")
+                            .font(.custom("AvenirNext-Regular", size: 10, relativeTo: .caption2))
+                            .tracking(1)
+                            .foregroundStyle(FBColors.muted)
+                    }
+
+                    GeometryReader { geometry in
+                        Capsule().fill(FBColors.line.opacity(0.65))
+                            .overlay(alignment: .leading) {
+                                Capsule().fill(FBColors.cookieOrange)
+                                    .frame(width: geometry.size.width * progress)
+                            }
+                    }
+                    .frame(height: 5)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Level progress")
+                    .accessibilityValue("\(Int(progress * 100)) percent, \(max(0, dashboard.xpToNext)) XP to next level")
+
+                    HStack(spacing: 14) {
+                        NavigationLink {
+                            ProfileView(showsBackButton: true)
+                        } label: {
+                            Text("MY ACCOUNT")
+                                .frame(minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("My account")
+
+                        Text("|")
+                            .foregroundStyle(FBColors.line)
+                            .accessibilityHidden(true)
+
+                        NavigationLink {
+                            MyCollectiblesView()
+                        } label: {
+                            Text("MY COLLECTIBLES")
+                                .frame(minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("My collectibles")
+                    }
+                    .font(.custom("AvenirNext-Regular", size: 10, relativeTo: .caption2))
+                    .tracking(1.5)
+                    .foregroundStyle(FBColors.muted)
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .transition(.opacity)
+            }
+        }
+        .padding(.horizontal, isExpanded ? 18 : 0)
+        .padding(.top, isExpanded ? 18 : 0)
+        .padding(.bottom, isExpanded ? 10 : 0)
+        .frame(width: isExpanded ? expandedWidth : avatarSize, alignment: .trailing)
+        .foregroundStyle(FBColors.charcoal)
+        .background {
+            RoundedRectangle(cornerRadius: isExpanded ? 26 : avatarSize / 2, style: .continuous)
+                .fill(Color.white)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: isExpanded ? 26 : avatarSize / 2, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: isExpanded ? 26 : avatarSize / 2, style: .continuous)
+                .strokeBorder(FBColors.line.opacity(0.65), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(isExpanded ? 0.20 : 0.08), radius: isExpanded ? 20 : 6, x: 0, y: 6)
+        .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.38, dampingFraction: 0.86), value: isExpanded)
+        .accessibilityAction(.escape) { isExpanded = false }
+    }
+}
+
+
+/// The hero is one image; Home's ScrollView owns vertical drags across it.
+private struct HomeHeroArtwork: View {
+    @EnvironmentObject private var appState: AppState
+    let preferredScene: DashboardHeroScene
+    let screenWidth: CGFloat
+
+    var body: some View {
+        Group {
+            if appState.isHomeReadyForEntrance || !appState.isLaunchSplashVisible {
+                artwork
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Color.white
+            }
+        }
+        .frame(width: screenWidth, height: 628)
+        .clipped()
+        .contentShape(Rectangle())
+        .accessibilityLabel("Too and Tiel, \(preferredScene.rawValue) scene")
+    }
+
+    private var artwork: Image {
+        if let image = StoreImagePreloader.cachedAsset(named: preferredScene.assetName) {
+            return Image(uiImage: image)
+        }
+        return Image(preferredScene.assetName)
     }
 }

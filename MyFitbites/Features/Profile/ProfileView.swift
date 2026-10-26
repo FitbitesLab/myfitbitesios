@@ -20,18 +20,20 @@ struct ProfileView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: FBSpacing.lg) {
+            VStack(alignment: .leading, spacing: 8) {
                 if showsBackButton {
                     backButton
                 }
 
-                profileHeader
-                accountCard
-                myFitbitesCard
-                addressCard
-                preferencesCard
+                VStack(alignment: .leading, spacing: FBSpacing.lg) {
+                    accountCard
+                    myFitbitesCard
+                    addressCard
+                    preferencesCard
+                }
             }
-            .padding(FBSpacing.md)
+            .padding(.horizontal, FBSpacing.md)
+            .padding(.top, 4)
             .padding(.bottom, FBSpacing.xl)
         }
         .background(Color.white.ignoresSafeArea())
@@ -102,47 +104,15 @@ struct ProfileView: View {
         Button {
             dismiss()
         } label: {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 18, weight: .bold))
+            Text("BACK")
+                .font(.custom("AvenirNext-Regular", size: 10, relativeTo: .caption2))
+                .tracking(1.5)
                 .foregroundStyle(FBColors.charcoal)
-                .frame(width: 44, height: 44)
-                .background(FBColors.surface, in: Circle())
-                .overlay(Circle().stroke(FBColors.line.opacity(0.7)))
+                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Back")
-    }
-
-    private var profileHeader: some View {
-        HStack(spacing: 14) {
-            Button {
-                isAvatarPickerPresented = true
-            } label: {
-                FBAvatarView(avatar: appState.customerProfile.avatar, size: 72)
-                    .overlay(alignment: .bottomTrailing) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 24, height: 24)
-                            .background(FBColors.cookieOrange, in: Circle())
-                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                    }
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Change avatar")
-
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Account settings")
-                    .font(.custom("AvenirNext-DemiBold", size: 18))
-                    .tracking(0.75)
-                    .foregroundStyle(FBColors.charcoal)
-                Text("Profile, addresses and delivery preferences.")
-                    .font(.custom("AvenirNext-Regular", size: 12))
-                    .tracking(0.55)
-                    .foregroundStyle(FBColors.muted)
-            }
-        }
-        .padding(.top, 10)
     }
 
     private var accountCard: some View {

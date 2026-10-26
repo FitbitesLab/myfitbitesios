@@ -3,6 +3,7 @@ import UIKit
 
 @main
 struct MyFitbitesApp: App {
+    @UIApplicationDelegateAdaptor(MyFitbitesAppDelegate.self) private var appDelegate
     @StateObject private var appState = MyFitbitesApp.makeAppState()
 
     init() {
@@ -21,7 +22,19 @@ struct MyFitbitesApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppRootView()
+            Group {
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--arcade-preview") {
+                    LabArcadeExperimentView()
+                } else if ProcessInfo.processInfo.arguments.contains("--arcade-too-preview") {
+                    ArcadeDemoView(onBack: {})
+                } else {
+                    AppRootView()
+                }
+                #else
+                AppRootView()
+                #endif
+            }
                 .environmentObject(appState)
                 .preferredColorScheme(.light)
         }

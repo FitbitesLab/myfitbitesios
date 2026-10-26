@@ -4,6 +4,11 @@ import UIKit
 
 struct RewardsView: View {
     @EnvironmentObject private var appState: AppState
+    @State private var isArcadePresented = false
+    @State private var isRicoStorePresented = false
+    @State private var selectedComic: RicoStoreItem?
+    @State private var selectedRicoCategory: RicoStoreCategory = .comics
+    @State private var rewardNotice: String?
     @State private var animatedXPProgress = 0.0
     @State private var selectedFreeFitbitesReward: FreeFitbitesReward?
     @State private var redemptionSession: FreeFitbitesRedemptionSession?
@@ -26,28 +31,84 @@ struct RewardsView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    rewardsHero(width: proxy.size.width, topInset: proxy.safeAreaInsets.top)
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        rewardsBalanceCard
+            let cardHeight = max(140, (proxy.size.height - 48) / 3)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 12) {
+                    Button(action: openMyRewards) {
+                        RewardsDestinationCard(
+                            title: "My Rewards", subtitle: "Your next treat is on us",
+                            symbol: "gift.fill", tint: FBColors.cookieOrange,
+                            count: rewards.rewardsReady, artwork: "MyRewardsArtwork"
+                        )
                     }
-                    .padding(.horizontal, FBSpacing.md)
-                    .padding(.top, -17)
-                    .padding(.bottom, 28)
+                    .frame(height: cardHeight)
+
+                    Button { isArcadePresented = true } label: {
+                        RewardsDestinationCard(
+                            title: "My Arcade", subtitle: "Play a little. Earn a little.",
+                            symbol: "gamecontroller.fill", tint: .purple,
+                            count: nil, artwork: "MyArcadeArtwork"
+                        )
+                    }
+                    .frame(height: cardHeight)
+
+                    Button { isRicoStorePresented = true } label: {
+                        RewardsDestinationCard(
+                            title: "Rico Store", subtitle: "\(rewards.ricoWallet.balance.formatted()) Rico Coins",
+                            symbol: "bag.fill", tint: .blue,
+                            count: nil, artwork: "RewardsHero"
+                        )
+                    }
+                    .frame(height: cardHeight)
                 }
+                .buttonStyle(.plain)
+                .padding(.horizontal, FBSpacing.md)
+                .padding(.vertical, 12)
             }
-            .ignoresSafeArea(edges: .top)
         }
         .background(Color.white.ignoresSafeArea())
         .navigationTitle("Rewards")
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear {
-            animatedXPProgress = 0
-            withAnimation(.easeOut(duration: 0.9).delay(0.15)) {
-                animatedXPProgress = xpProgress
+        .task { await appState.refreshDashboardAndRewards() }
+        .fullScreenCover(isPresented: $isArcadePresented) {
+            LabArcadeExperimentView()
+        }
+        .fullScreenCover(isPresented: $isRicoStorePresented) {
+            NavigationStack {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        RewardsPageHero(artwork: "RewardsHero", title: "Rico Store")
+                            .overlay(alignment: .topLeading) {
+                                RewardsPageBackButton { isRicoStorePresented = false }
+                                    .padding(10)
+                            }
+                            .overlay(alignment: .bottomTrailing) {
+                                ricoBalancePill
+                                    .padding(14)
+                            }
+                        ricoStoreNavigationRow
+                        ricoStoreCard
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 12)
+                    .padding(.bottom, 28)
+                }
+                .background(Color.white)
+                .toolbar(.hidden, for: .navigationBar)
+                .task { await appState.refreshDashboardAndRewards() }
+                .fullScreenCover(item: $selectedComic) { item in
+                    RicoComicReader(item: item)
+                        .environmentObject(appState)
+                }
             }
+        }
+        .alert("My Rewards", isPresented: Binding(
+            get: { rewardNotice != nil },
+            set: { if !$0 { rewardNotice = nil } }
+        )) {
+            Button("OK", role: .cancel) { rewardNotice = nil }
+        } message: {
+            Text(rewardNotice ?? "")
         }
         .sheet(item: $selectedFreeFitbitesReward) { reward in
             FreeFitbitesRedemptionSheet(
@@ -60,6 +121,8 @@ struct RewardsView: View {
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+            .interactiveDismissDisabled()
+            .task(id: reward.id) { await createRedemptionSession(for: reward) }
         }
         .onChange(of: selectedFreeFitbitesReward) { _, reward in
             if reward == nil {
@@ -69,6 +132,24 @@ struct RewardsView: View {
                 rewardErrorMessage = nil
             }
         }
+    }
+
+    private func openMyRewards() {
+        guard rewards.rewardsReady > 0 else {
+            rewardNotice = "No free Fitbites available yet. \(max(0, rewards.loyaltyTarget - rewards.loyaltyStamps)) more stamps until your next reward."
+            return
+        }
+        guard rewards.freeFitbitesRedemptionEnabled else {
+            rewardNotice = "Reward redemption is temporarily unavailable."
+            return
+        }
+        guard let reward = rewards.freeFitbitesRewards.first else {
+            rewardNotice = "Your rewards are still loading. Please try again shortly."
+            return
+        }
+        redemptionSession = nil
+        rewardErrorMessage = nil
+        selectedFreeFitbitesReward = reward
     }
 
     private var achievementsMiniatureWidget: some View {
@@ -104,7 +185,7 @@ struct RewardsView: View {
                 .scaledToFit()
                 .frame(width: 54, height: 54)
 
-            Text(rewards.ricoWallet.balance.formatted())
+            Text("\(rewards.ricoWallet.balance.formatted()) Rico Coins")
                 .font(.custom("AvenirNext-DemiBold", size: 18))
                 .foregroundStyle(FBColors.charcoal)
                 .lineLimit(1)
@@ -317,7 +398,11 @@ struct RewardsView: View {
     }
 
     private func createRedemptionSession(for reward: FreeFitbitesReward) async {
-        guard let client = appState.customerAPIClient else { return }
+        guard !isCreatingRedemptionSession else { return }
+        guard let client = appState.customerAPIClient else {
+            rewardErrorMessage = "Please sign in again to load your reward QR."
+            return
+        }
         isCreatingRedemptionSession = true
         rewardErrorMessage = nil
         defer { isCreatingRedemptionSession = false }
@@ -376,28 +461,87 @@ struct RewardsView: View {
         selectedFreeFitbitesReward = nil
     }
 
+    private enum RicoStoreCategory: String, CaseIterable {
+        case comics = "STORIES", avatar = "AVATARS", coupons = "REWARDS", goodies = "COLLECTIBLES"
+
+        func contains(_ item: RicoStoreItem) -> Bool {
+            switch self {
+            case .comics: return item.itemType == "too_tiel_episode"
+            case .avatar: return ["avatar", "profile_frame"].contains(item.itemType)
+            case .coupons: return item.itemType == "voucher"
+            case .goodies: return !["too_tiel_episode", "avatar", "profile_frame", "voucher"].contains(item.itemType)
+            }
+        }
+    }
+
+    private var filteredRicoItems: [RicoStoreItem] {
+        rewards.ricoStoreItems.filter { selectedRicoCategory.contains($0) }
+    }
+
+    private var ricoBalancePill: some View {
+        HStack(spacing: 4) {
+            Image("RicoCoin")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 20, height: 20)
+            Text(rewards.ricoWallet.balance.formatted())
+                .font(.custom("AvenirNext-DemiBold", size: 11, relativeTo: .caption))
+                .monospacedDigit()
+                .fixedSize()
+        }
+        .foregroundStyle(FBColors.charcoal)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.white, in: Capsule())
+        .overlay(Capsule().strokeBorder(FBColors.line.opacity(0.65)))
+        .shadow(color: .black.opacity(0.10), radius: 4, y: 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(rewards.ricoWallet.balance) Rico Coins")
+    }
+
+    private var ricoStoreNavigationRow: some View {
+        ViewThatFits(in: .horizontal) {
+            ricoCategoryLabels(fontSize: 12, spacing: 8)
+            ricoCategoryLabels(fontSize: 11, spacing: 6)
+            ricoCategoryLabels(fontSize: 10, spacing: 5)
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func ricoCategoryLabels(fontSize: CGFloat, spacing: CGFloat) -> some View {
+        HStack(spacing: spacing) {
+            ForEach(RicoStoreCategory.allCases, id: \.self) { category in
+                if category != .comics {
+                    Text("|")
+                        .font(.custom("AvenirNext-Regular", size: fontSize))
+                        .foregroundStyle(FBColors.line)
+                        .accessibilityHidden(true)
+                }
+                Button { selectedRicoCategory = category } label: {
+                    // Reserve the same intrinsic width in both selection states.
+                    Text(category.rawValue)
+                        .font(.custom("AvenirNext-DemiBold", size: fontSize))
+                        .hidden()
+                        .overlay {
+                            Text(category.rawValue)
+                                .font(.custom(selectedRicoCategory == category ? "AvenirNext-DemiBold" : "AvenirNext-Regular", size: fontSize))
+                                .foregroundStyle(selectedRicoCategory == category ? FBColors.charcoal : FBColors.muted)
+                        }
+                        .tracking(0.5)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(category.rawValue)
+                .accessibilityAddTraits(selectedRicoCategory == category ? .isSelected : [])
+            }
+        }
+        .fixedSize(horizontal: true, vertical: false)
+    }
+
     private var ricoStoreCard: some View {
         VStack(alignment: .leading, spacing: FBSpacing.md) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Rico's Store")
-                        .font(.custom("AvenirNext-DemiBold", size: 12))
-                        .tracking(1.55)
-                        .textCase(.uppercase)
-                        .foregroundStyle(FBColors.charcoal)
-                    Text("\(rewards.ricoWallet.balance) Rico Coins")
-                        .font(.custom("AvenirNext-DemiBold", size: 24))
-                        .foregroundStyle(FBColors.charcoal)
-                }
-
-                Spacer()
-
-                Text("\(rewards.ricoWallet.todayEarned)/\(rewards.ricoWallet.dailyMax) today")
-                    .font(.custom("AvenirNext-DemiBold", size: 11))
-                    .tracking(0.8)
-                    .foregroundStyle(FBColors.muted)
-            }
-
             if let message = appState.ricoStoreErrorMessage {
                 Text(message)
                     .font(.custom("AvenirNext-Regular", size: 12))
@@ -408,19 +552,23 @@ struct RewardsView: View {
                     .overlay(RoundedRectangle(cornerRadius: FBCorner.compact).stroke(FBColors.line.opacity(0.58)))
             }
 
-            if rewards.ricoStoreItems.isEmpty {
-                Text("Rico is loading the vault.")
+            if filteredRicoItems.isEmpty {
+                Text("No items in this category yet.")
                     .font(.custom("AvenirNext-Regular", size: 13))
                     .foregroundStyle(FBColors.muted)
             } else {
                 VStack(spacing: 10) {
-                    ForEach(rewards.ricoStoreItems) { item in
+                    ForEach(filteredRicoItems) { item in
+                        if item.itemType == "too_tiel_episode" {
+                            RicoComicStoreCard(item: item) { selectedComic = item }
+                        } else {
                         RicoStoreItemRow(
                             item: item,
                             isPurchasing: appState.ricoPurchaseIDsInFlight.contains(item.id),
                             canAttemptPurchase: appState.canAttemptRicoStorePurchase
                         ) {
                             Task { await appState.purchaseRicoStoreItem(item) }
+                        }
                         }
                     }
                 }
@@ -530,6 +678,77 @@ struct RewardsView: View {
             .background(FBColors.card, in: RoundedRectangle(cornerRadius: FBCorner.card))
         }
         .padding(.top, 6)
+    }
+}
+
+private struct RewardsDestinationCard: View {
+    let title: String
+    let subtitle: String
+    let symbol: String
+    let tint: Color
+    let count: Int?
+    let artwork: String?
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .bottomLeading) {
+                if let artwork {
+                    Image(artwork)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .clipped()
+                    LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .top, endPoint: .bottom)
+                } else {
+                    LinearGradient(colors: [tint.opacity(0.06), tint.opacity(0.18)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    Image(systemName: symbol)
+                        .font(.system(size: min(100, proxy.size.height * 0.5), weight: .regular))
+                        .foregroundStyle(tint.opacity(0.14))
+                        .rotationEffect(.degrees(-12))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                        .padding(.trailing, 22)
+                }
+
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Image(systemName: symbol)
+                            .font(.system(size: 21, weight: .semibold))
+                            .foregroundStyle(artwork == nil ? tint : .white)
+                        Spacer()
+                        if let count {
+                            Text("\(count)")
+                                .font(.custom("AvenirNext-DemiBold", size: 14))
+                                .foregroundStyle(tint)
+                                .padding(.horizontal, 11)
+                                .padding(.vertical, 5)
+                                .background(.white, in: Capsule())
+                                .accessibilityLabel("\(count) free Fitbites available")
+                        }
+                    }
+                    Spacer(minLength: 4)
+                    HStack(alignment: .bottom) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(title)
+                                .font(.custom("AvenirNext-DemiBold", size: 26))
+                            Text(subtitle)
+                                .font(.custom("AvenirNext-Regular", size: 13))
+                                .opacity(0.8)
+                        }
+                        .foregroundStyle(artwork == nil ? FBColors.charcoal : .white)
+                        Spacer(minLength: 8)
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(artwork == nil ? tint : .white)
+                            .frame(width: 38, height: 38)
+                            .background(.white.opacity(artwork == nil ? 0.7 : 0.18), in: Circle())
+                    }
+                }
+                .padding(22)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 26))
+            .overlay(RoundedRectangle(cornerRadius: 26).stroke(tint.opacity(0.12)))
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

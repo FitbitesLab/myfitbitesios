@@ -174,7 +174,7 @@ private extension Achievement {
 struct RicoWalletSummary {
     let balance: Int
     let todayEarned: Int
-    let dailyMax: Int
+    let dailyMax: Int?
 }
 
 struct RicoStoreItem: Identifiable, Hashable {
@@ -384,13 +384,24 @@ enum DeliveryCoordinateSource: String, Codable, Hashable {
     }
 }
 
-struct StoreCatalog {
+struct StoreCatalog: Codable {
     let categories: [StoreCategory]
     let products: [StoreProduct]
     let featuredProductID: String
+    var homePromotion: HomeProductPromotion? = nil
 }
 
-struct StoreCategory: Identifiable, Hashable {
+struct HomeProductPromotion: Codable {
+    let title: String
+    let eyebrow: String
+    let subtitle: String
+    let cta: String
+    let imageURL: URL?
+    let imagePosition: String
+    let productID: String?
+}
+
+struct StoreCategory: Identifiable, Hashable, Codable {
     let id: String
     let name: String
     let label: String
@@ -399,7 +410,7 @@ struct StoreCategory: Identifiable, Hashable {
     let markName: String
 }
 
-struct StoreProduct: Identifiable, Hashable {
+struct StoreProduct: Identifiable, Hashable, Codable {
     let id: String
     let inventoryItemID: Int
     let name: String
@@ -496,7 +507,7 @@ enum TooLabClearance: Int, CaseIterable, Identifiable {
     }
 }
 
-struct StoreTopping: Identifiable, Hashable {
+struct StoreTopping: Identifiable, Hashable, Codable {
     let id: String
     let toppingID: Int
     let name: String

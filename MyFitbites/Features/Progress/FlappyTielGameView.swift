@@ -8,6 +8,7 @@ struct FlappyTielGameCard: View {
     @State private var bestScore = UserDefaults.standard.integer(forKey: "FlappyTielBestScore")
     @State private var completionMessage: String?
     @State private var hasSubmittedDailyReward = false
+    let onBack: () -> Void
 
     private let dailyIdentifier = "flappy_tiel"
     private let rewardScore = 5
@@ -21,49 +22,7 @@ struct FlappyTielGameCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 7) {
-                        Image(systemName: "bird.fill")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(Color.purple.opacity(0.82))
-                            .frame(width: 16, height: 16)
-
-                        Text("LAB GAME")
-                            .font(.custom("AvenirNext-DemiBold", size: 11))
-                            .tracking(1.7)
-                            .foregroundStyle(FBColors.charcoal)
-                    }
-
-                    Text("Flappy Tiel")
-                        .font(.custom("AvenirNext-DemiBold", size: 20))
-                        .foregroundStyle(FBColors.charcoal)
-                        .lineLimit(1)
-
-                    Text("Tap to dodge the lab pipes.")
-                        .font(.custom("AvenirNext-Regular", size: 13))
-                        .foregroundStyle(FBColors.muted)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                Button("Reset") {
-                    completionMessage = nil
-                    hasSubmittedDailyReward = false
-                }
-                .font(.custom("AvenirNext-DemiBold", size: 12))
-                .foregroundStyle(Color.purple)
-                .buttonStyle(.plain)
-            }
-
-            HStack(spacing: 8) {
-                LabPuzzleStatPill(title: "Best", value: bestScore > 0 ? "\(bestScore)" : "--")
-                LabPuzzleStatPill(title: "Goal", value: "\(rewardScore)")
-                LabPuzzleStatPill(title: "Daily", value: hasClaimedDailyReward ? "Claimed" : "+\(dailyRewardAmount) LXP")
-            }
-
+        ZStack(alignment: .topLeading) {
             FlappyTielSpriteView(
                 rewardScore: rewardScore,
                 onScoreChanged: { score in
@@ -87,23 +46,44 @@ struct FlappyTielGameCard: View {
                     }
                 }
             )
-            .frame(maxWidth: .infinity)
-            .frame(height: 520)
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .overlay(RoundedRectangle(cornerRadius: 24).stroke(FBColors.line.opacity(0.58)))
-            .shadow(color: .black.opacity(0.08), radius: 14, y: 8)
+            .ignoresSafeArea()
 
-            if let completionMessage {
-                Text(completionMessage)
-                    .font(.custom("AvenirNext-Regular", size: 12))
-                    .foregroundStyle(FBColors.muted)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.82)
+            VStack(alignment: .leading) {
+                Button(action: onBack) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 13, weight: .bold))
+
+                        Text("Back")
+                            .font(.custom("AvenirNext-DemiBold", size: 13))
+                    }
+                    .foregroundStyle(FBColors.charcoal)
+                    .padding(.horizontal, 12)
+                    .frame(height: 34)
+                    .background(.white.opacity(0.86), in: Capsule())
+                    .overlay(Capsule().stroke(.white.opacity(0.68)))
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                if let completionMessage {
+                    Text(completionMessage)
+                        .font(.custom("AvenirNext-DemiBold", size: 12))
+                        .foregroundStyle(FBColors.charcoal)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.82)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 9)
+                        .background(.white.opacity(0.86), in: Capsule())
+                }
             }
+            .padding(.top, 54)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 26)
         }
-        .padding(FBSpacing.md)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black.ignoresSafeArea())
     }
 }
 
@@ -166,6 +146,9 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
     private let tiel = SKNode()
     private let scoreLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
     private let messageLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
+    private let introOverlay = SKNode()
+    private let gameOverOverlay = SKNode()
+    private let finalScoreLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
     private var score = 0
     private var gameState: GameState = .ready
     private var lastObstacleTime: TimeInterval = 0
@@ -206,6 +189,8 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
             flap()
         case .gameOver:
             resetGame()
+            startGame()
+            flap()
         }
     }
 
@@ -256,6 +241,8 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         addGround()
         addTiel()
         addHud()
+        addIntroOverlay()
+        addGameOverOverlay()
     }
 
     private func addSky() {
@@ -347,7 +334,7 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
     private func addTiel() {
         tiel.removeAllChildren()
         tiel.position = CGPoint(x: size.width * 0.3, y: size.height * 0.56)
-        tiel.zPosition = 10
+        tiel.zPosition = 20
 
         let bird = SKSpriteNode(imageNamed: "FlappyTielBird")
         bird.size = CGSize(width: 60, height: 44)
@@ -358,30 +345,114 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func addHud() {
-        scoreLabel.fontSize = 42
-        scoreLabel.fontColor = .white
+        scoreLabel.fontSize = 24
+        scoreLabel.fontColor = UIColor(red: 0.15, green: 0.12, blue: 0.1, alpha: 1)
         scoreLabel.text = "0"
-        scoreLabel.position = CGPoint(x: size.width / 2, y: size.height - 82)
-        scoreLabel.zPosition = 30
-        scoreLabel.horizontalAlignmentMode = .center
+        scoreLabel.position = CGPoint(x: 22, y: size.height - 88)
+        scoreLabel.zPosition = 1000
+        scoreLabel.horizontalAlignmentMode = .left
         scoreLabel.verticalAlignmentMode = .center
-        scoreLabel.shadowed()
         addChild(scoreLabel)
 
         messageLabel.fontSize = 18
         messageLabel.fontColor = .white
-        messageLabel.text = "Tap to fly"
+        messageLabel.text = ""
         messageLabel.position = CGPoint(x: size.width / 2, y: size.height * 0.5)
-        messageLabel.zPosition = 30
+        messageLabel.zPosition = 1000
         messageLabel.horizontalAlignmentMode = .center
         messageLabel.verticalAlignmentMode = .center
-        messageLabel.shadowed()
+        messageLabel.isHidden = true
         addChild(messageLabel)
+    }
+
+    private func addIntroOverlay() {
+        introOverlay.removeAllChildren()
+        introOverlay.zPosition = 900
+
+        let artwork = fullScreenSprite(imageNamed: "FlappyTielIntro")
+        artwork.zPosition = 0
+        introOverlay.addChild(artwork)
+
+        let button = callToActionButton(title: "TAP TO PLAY")
+        button.position = CGPoint(x: size.width / 2, y: max(78, size.height * 0.17))
+        button.zPosition = 3
+        introOverlay.addChild(button)
+
+        addChild(introOverlay)
+    }
+
+    private func addGameOverOverlay() {
+        gameOverOverlay.removeAllChildren()
+        gameOverOverlay.zPosition = 950
+
+        let artwork = fullScreenSprite(imageNamed: "FlappyTielGameOver")
+        artwork.zPosition = 0
+        gameOverOverlay.addChild(artwork)
+
+        finalScoreLabel.fontSize = 24
+        finalScoreLabel.fontColor = .white
+        finalScoreLabel.horizontalAlignmentMode = .center
+        finalScoreLabel.verticalAlignmentMode = .center
+        finalScoreLabel.position = CGPoint(x: size.width / 2, y: max(118, size.height * 0.25))
+        finalScoreLabel.zPosition = 3
+        finalScoreLabel.text = "SCORE 0"
+        gameOverOverlay.addChild(finalScoreLabel)
+
+        let button = callToActionButton(title: "TRY AGAIN")
+        button.position = CGPoint(x: size.width / 2, y: max(70, size.height * 0.15))
+        button.zPosition = 3
+        gameOverOverlay.addChild(button)
+
+        gameOverOverlay.isHidden = true
+        addChild(gameOverOverlay)
+    }
+
+    private func fullScreenSprite(imageNamed: String) -> SKSpriteNode {
+        let texture = SKTexture(imageNamed: imageNamed)
+        let sprite = SKSpriteNode(texture: texture)
+        sprite.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        sprite.size = aspectFillSize(for: texture.size(), in: size)
+        return sprite
+    }
+
+    private func aspectFillSize(for imageSize: CGSize, in targetSize: CGSize) -> CGSize {
+        guard imageSize.width > 0, imageSize.height > 0, targetSize.width > 0, targetSize.height > 0 else {
+            return targetSize
+        }
+
+        let scale = max(targetSize.width / imageSize.width, targetSize.height / imageSize.height)
+        return CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
+    }
+
+    private func callToActionButton(title: String) -> SKNode {
+        let node = SKNode()
+        let buttonSize = CGSize(width: min(size.width - 72, 230), height: 54)
+        let shape = SKShapeNode(rectOf: buttonSize, cornerRadius: 27)
+        shape.fillColor = UIColor(red: 1.0, green: 0.83, blue: 0.26, alpha: 1)
+        shape.strokeColor = UIColor(red: 0.47, green: 0.22, blue: 0.08, alpha: 1)
+        shape.lineWidth = 4
+        shape.zPosition = 0
+        node.addChild(shape)
+
+        let label = SKLabelNode(fontNamed: "AvenirNext-Heavy")
+        label.text = title
+        label.fontSize = 20
+        label.fontColor = UIColor(red: 0.28, green: 0.12, blue: 0.04, alpha: 1)
+        label.horizontalAlignmentMode = .center
+        label.verticalAlignmentMode = .center
+        label.position = CGPoint(x: 0, y: -1)
+        label.zPosition = 1
+        node.addChild(label)
+
+        return node
     }
 
     private func startGame() {
         gameState = .running
         messageLabel.text = ""
+        introOverlay.isHidden = true
+        gameOverOverlay.isHidden = true
+        scoreLabel.isHidden = false
         lastObstacleTime = 0
         tiel.physicsBody?.isDynamic = true
     }
@@ -397,7 +468,11 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
         score = 0
         didReachReward = false
         scoreLabel.text = "0"
-        messageLabel.text = "Tap to fly"
+        scoreLabel.isHidden = true
+        messageLabel.text = ""
+        messageLabel.isHidden = true
+        introOverlay.isHidden = false
+        gameOverOverlay.isHidden = true
         children
             .filter { $0.name == "obstacle" }
             .forEach { $0.removeFromParent() }
@@ -415,7 +490,10 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
     private func endGame() {
         guard gameState == .running else { return }
         gameState = .gameOver
-        messageLabel.text = "Score \(score). Tap again."
+        messageLabel.text = ""
+        scoreLabel.isHidden = true
+        finalScoreLabel.text = "SCORE \(score)"
+        gameOverOverlay.isHidden = false
         LabArcadeSound.playReveal()
 
         children
@@ -435,7 +513,7 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
 
         let pair = SKNode()
         pair.name = "obstacle"
-        pair.zPosition = 6
+        pair.zPosition = 10
         pair.position = CGPoint(x: startX, y: 0)
 
         let topPipe = pipe(height: topHeight, width: pipeWidth, position: .top)
@@ -469,89 +547,38 @@ private final class FlappyTielScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func pipe(height: CGFloat, width: CGFloat, position: PipePosition) -> SKNode {
-        if position == .top {
-            return topPipe(height: height, width: width)
+        let node = SKNode()
+        let capHeight = width * (574.0 / 713.0)
+        let bodyOverlap: CGFloat = 1
+        let bodyHeight = max(height - capHeight + bodyOverlap, 1)
+        let collisionWidth = width * 0.98
+
+        let body = SKSpriteNode(imageNamed: "FlappyTielPipeBlueBody")
+        body.size = CGSize(width: width, height: bodyHeight)
+        body.zPosition = 0
+
+        let cap = SKSpriteNode(imageNamed: "FlappyTielPipeBlueCapDown")
+        cap.size = CGSize(width: width, height: capHeight)
+        cap.zPosition = 1
+
+        switch position {
+        case .top:
+            cap.position = CGPoint(x: 0, y: -height / 2 + capHeight / 2)
+            body.position = CGPoint(x: 0, y: cap.position.y + capHeight / 2 - bodyOverlap + bodyHeight / 2)
+        case .bottom:
+            cap.position = CGPoint(x: 0, y: height / 2 - capHeight / 2)
+            cap.yScale *= -1
+            body.position = CGPoint(x: 0, y: cap.position.y - capHeight / 2 + bodyOverlap - bodyHeight / 2)
         }
 
-        let node = SKNode()
-        let lidHeight = min(max(height * 0.32, 52), 74)
-        let shaftHeight = max(height - lidHeight + 12, 24)
-        let texture = SKTexture(imageNamed: "FlappyTielPipeGreen")
-        let shaftRect = CGRect(x: 0, y: 0, width: 1, height: 0.75)
-        let lidRect = CGRect(x: 0, y: 0.75, width: 1, height: 0.25)
-        let shaftVisibleRatio: CGFloat = 303 / 724
-        let lidVisibleRatio: CGFloat = 498 / 724
-        let shaftHitboxWidth = width * 0.44
-        let lidHitboxWidth = width + 4
+        node.addChild(body)
+        node.addChild(cap)
 
-        let shaft = SKSpriteNode(texture: SKTexture(rect: shaftRect, in: texture))
-        shaft.size = CGSize(width: shaftHitboxWidth / shaftVisibleRatio, height: shaftHeight)
-        shaft.position = CGPoint(
-            x: 0,
-            y: position == .top ? height / 2 - shaftHeight / 2 : -height / 2 + shaftHeight / 2
-        )
-        shaft.zPosition = 1
-
-        let lid = SKSpriteNode(texture: SKTexture(rect: lidRect, in: texture))
-        lid.size = CGSize(width: lidHitboxWidth / lidVisibleRatio, height: lidHeight)
-        lid.position = CGPoint(
-            x: 0,
-            y: position == .top ? -height / 2 + lidHeight / 2 : height / 2 - lidHeight / 2
-        )
-        lid.zPosition = 2
-
-        node.addChild(shaft)
-        node.addChild(lid)
-
-        let shaftBody = SKPhysicsBody(rectangleOf: CGSize(width: shaftHitboxWidth, height: shaftHeight), center: shaft.position)
-        let lidBody = SKPhysicsBody(rectangleOf: CGSize(width: lidHitboxWidth, height: lidHeight), center: lid.position)
-        node.physicsBody = SKPhysicsBody(bodies: [shaftBody, lidBody])
+        node.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: collisionWidth, height: height))
         node.physicsBody?.isDynamic = false
         node.physicsBody?.categoryBitMask = PhysicsCategory.obstacle
         node.physicsBody?.contactTestBitMask = PhysicsCategory.tiel
         node.physicsBody?.collisionBitMask = PhysicsCategory.tiel
         return node
-    }
-
-    private func topPipe(height: CGFloat, width: CGFloat) -> SKNode {
-        let node = SKNode()
-        let lidHeight = min(max(height * 0.32, 52), 74)
-        let shaftHeight = max(height - lidHeight + 12, 24)
-        let shaftHitboxWidth = width
-        let lidHitboxWidth = width
-
-        let shaft = SKSpriteNode(imageNamed: "FlappyTielPipeBlueBody")
-        shaft.size = CGSize(width: width, height: shaftHeight)
-        shaft.position = CGPoint(x: 0, y: height / 2 - shaftHeight / 2)
-        shaft.zPosition = 1
-
-        let lid = SKSpriteNode(imageNamed: "FlappyTielPipeBlueLid")
-        lid.size = CGSize(width: width, height: lidHeight)
-        lid.position = CGPoint(x: 0, y: -height / 2 + lidHeight / 2)
-        lid.zPosition = 2
-
-        node.addChild(shaft)
-        node.addChild(lid)
-
-        let shaftBody = SKPhysicsBody(rectangleOf: CGSize(width: shaftHitboxWidth, height: shaftHeight), center: shaft.position)
-        let lidBody = SKPhysicsBody(rectangleOf: CGSize(width: lidHitboxWidth, height: lidHeight), center: lid.position)
-        node.physicsBody = SKPhysicsBody(bodies: [shaftBody, lidBody])
-        node.physicsBody?.isDynamic = false
-        node.physicsBody?.categoryBitMask = PhysicsCategory.obstacle
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.tiel
-        node.physicsBody?.collisionBitMask = PhysicsCategory.tiel
-        return node
-    }
-}
-
-private extension SKLabelNode {
-    func shadowed() {
-        let shadow = SKLabelNode(fontNamed: fontName)
-        shadow.text = text
-        shadow.fontSize = fontSize
-        shadow.fontColor = UIColor.black.withAlphaComponent(0.22)
-        shadow.position = CGPoint(x: 2, y: -2)
-        shadow.zPosition = -1
-        addChild(shadow)
     }
 }
