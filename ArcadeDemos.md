@@ -21,7 +21,7 @@ The earlier break was caused by live Xcode references into the sibling game: 29 
 - Organization: FITBITES COMPANY LIMITED, team `9V3UZFAA66`.
 - The explicit App ID is registered under that organization. Both Debug and Release use this team.
 - Do not switch back to Personal Team `CN4547Z998` or create a new Personal Team provisioning profile. The migration depends on leaving the expired development identity behind.
-- Version/build remain `0.1` / `1`. App Store Connect setup and a signed distribution archive/upload are separate steps.
+- Version/build are `0.1` / `2`. Build 2 includes the approved UI, startup, scrolling and native widget updates; archive/upload status is recorded by the release workflow.
 
 ## Validation
 

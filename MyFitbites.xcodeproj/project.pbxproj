@@ -569,7 +569,7 @@ name = MyFitbitesWidgets; productName = MyFitbitesWidgets; productReference = 90
 				INFOPLIST_FILE = MyFitbites/Info.plist;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9V3UZFAA66;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -601,7 +601,7 @@ name = MyFitbitesWidgets; productName = MyFitbitesWidgets; productReference = 90
 				INFOPLIST_FILE = MyFitbites/Info.plist;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9V3UZFAA66;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -628,7 +628,7 @@ name = MyFitbitesWidgets; productName = MyFitbitesWidgets; productReference = 90
 		A8490EEBFA8C9588EF9DCA7B = {isa = XCBuildConfiguration; buildSettings = {
 APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = 9V3UZFAA66;
 CODE_SIGN_ENTITLEMENTS = MyFitbitesWidgets/MyFitbitesWidgets.entitlements;
-CURRENT_PROJECT_VERSION = 1; MARKETING_VERSION = 0.1; GENERATE_INFOPLIST_FILE = YES;
+CURRENT_PROJECT_VERSION = 2; MARKETING_VERSION = 0.1; GENERATE_INFOPLIST_FILE = YES;
 INFOPLIST_FILE = MyFitbitesWidgets/Info.plist; INFOPLIST_KEY_CFBundleDisplayName = "MyFitbites";
 IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
 PRODUCT_BUNDLE_IDENTIFIER = vn.com.fitbites.MyFitbites.Widgets; PRODUCT_NAME = "$(TARGET_NAME)";
@@ -637,7 +637,7 @@ SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; ENABLE_PREV
 		D7F9E05D56CF96A90D987684 = {isa = XCBuildConfiguration; buildSettings = {
 APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = 9V3UZFAA66;
 CODE_SIGN_ENTITLEMENTS = MyFitbitesWidgets/MyFitbitesWidgets.entitlements;
-CURRENT_PROJECT_VERSION = 1; MARKETING_VERSION = 0.1; GENERATE_INFOPLIST_FILE = YES;
+CURRENT_PROJECT_VERSION = 2; MARKETING_VERSION = 0.1; GENERATE_INFOPLIST_FILE = YES;
 INFOPLIST_FILE = MyFitbitesWidgets/Info.plist; INFOPLIST_KEY_CFBundleDisplayName = "MyFitbites";
 IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
 PRODUCT_BUNDLE_IDENTIFIER = vn.com.fitbites.MyFitbites.Widgets; PRODUCT_NAME = "$(TARGET_NAME)";
